@@ -130,7 +130,7 @@ public class LoginScreenController {
 		
 		this.setPortField(new TextField());
 		
-		String prevPort= FileHandler.getProperty("last_port");
+		String prevPort = FileHandler.getProperty("last_port");
 		if (prevPort == null) {
 			FileHandler.setProperty("last_port", "");
 		} else if (prevPort != null) {
@@ -205,10 +205,9 @@ public class LoginScreenController {
 			getMainController().setServer(new Server());
 			
 			if (b) {
-				
 				Runnable startServer = () -> {
 					try {
-						getMainController().getServer().startServer(Integer.parseInt(this.getPortField().getText()));
+						getMainController().getServer().startServer(Integer.parseInt(this.getPortField().getText()), false);
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
@@ -302,8 +301,8 @@ public class LoginScreenController {
 				try {
 					this.mainController.getClient().getClientSendingData().writeUTF("*![System] " + SystemInfo.getDate() + ": " + this.mainController.getClient().getClientName() + " has disconnected.");
 					FileHandler.writeToChatLog("[System] " + SystemInfo.getDate() + ": " + this.mainController.getClient().getClientName() + " has disconnected.");
+					this.mainController.getClient().setRunning(false);
 				} catch (Exception e1) {
-					//e1.printStackTrace();
 					System.err.println("You probably tried closing the window without logging in. That throws errors.");
 				}
 				window.close();

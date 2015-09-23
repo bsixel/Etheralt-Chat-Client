@@ -12,6 +12,7 @@ import javafx.application.Platform;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import server.ClientConnection;
+import userInteract.ChatText;
 import userInteract.MainScreenController;
 import client.Client;
 
@@ -55,6 +56,7 @@ public class CommandParser {
 			sc.getUsersArea().setText(input.substring("/adduser: ".length()));
 		} else if (command.equalsIgnoreCase("/purge")) {
 			sc.getChatBox().getChildren().clear();
+			sc.getImages().getChildren().clear();
 			sc.getChatField().clear();
 			new File(FileHandler.chatLogPath).delete();
 		} else if (command.equalsIgnoreCase("/open")) {
@@ -128,7 +130,6 @@ public class CommandParser {
 				e.printStackTrace();
 			}
 		} else if (command.equalsIgnoreCase("/getimg")) {
-			System.out.println("Kinda getting picture from " + args[1] + ", checking target...");
 			if (sc.getClient().getClientName().equalsIgnoreCase(args[2]) || args[2].equals("all")) {
 				File file = new File(FileHandler.picturesPath + "/" + args[3]);
 				Thread thread = new Thread(FileHandler.dlPic(sc, file, Integer.parseInt(args[4])));
@@ -164,6 +165,7 @@ public class CommandParser {
 			} else {
 				WebView webview = new WebView();
 				webview.setOnMouseClicked(click -> {
+					click.consume();
 					if (click.getClickCount() == 2) {
 						try {
 							desktop.browse(new URI(input.split(" ", 3)[2]));
@@ -179,6 +181,7 @@ public class CommandParser {
 			}
 		} else if (command.equalsIgnoreCase("/clearmedia")) {
 			sc.getChatField().clear();
+			sc.getImages().getChildren().stream().filter(e -> e instanceof ChatText).collect(Collectors.toList());
 			sc.getImages().getChildren().clear();
 		} else if (command.equalsIgnoreCase("/browse")) {
 			WebView webview = new WebView();
@@ -198,13 +201,16 @@ public class CommandParser {
 		} else if (command.equalsIgnoreCase("/audio")) {
 			sc.getChatField().clear();
 			Platform.runLater(() -> {
-				File file = Popups.startFileOpener("Select audio file to transmit.");Thread audioThread = new Thread(() -> {
+				File file = Popups.startFileOpener("Select audio file to transmit.");
+				Thread audioThread = new Thread(() -> {
 					FileHandler.transmitAudio(sc, file);
 				});
 				audioThread.setDaemon(true);
 				audioThread.start();
 			});
 			
+		} else if (command.equalsIgnoreCase("/updateusers")) {
+			sc.getUsersArea().setText(input.substring("/updateusers ".length()));
 		}
 		
 	}
@@ -259,7 +265,7 @@ public class CommandParser {
 		} else if (command.equalsIgnoreCase("*!users:")) {
 			if (client.getClientName().equalsIgnoreCase(args[1])) {
 				try {
-					client.getSendingData().writeUTF("Connected users: " + client.getServer().getUsers().stream().map(e -> e.getClientName()).collect(Collectors.toList()).toString());
+					client.getSendingData().writeUTF("Connected users: " + client.getServer().getUsers().stream().map(e -> e.getCC().getClientName()).collect(Collectors.toList()).toString());
 				} catch (IOException e) {
 					e.printStackTrace();
 				}

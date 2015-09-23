@@ -5,11 +5,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.security.SecureRandom;
 import java.util.ArrayList;
-import java.util.UUID;
 
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -17,6 +18,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ScrollPane.ScrollBarPolicy;
 import javafx.scene.control.TextArea;
@@ -39,12 +41,15 @@ import tools.SystemInfo;
 import application.ChatClient;
 import application.WindowController;
 import client.Client;
+import client.User;
 
 public class MainScreenController implements EventHandler<KeyEvent> {
 
 	//Lists
 	private ArrayList<Thread> dlThreads = new ArrayList<Thread>();
-
+	private ArrayList<User> usersSubList = new ArrayList<User>();
+	private ObservableList<User> users = FXCollections.observableArrayList(usersSubList);
+	
 	//Buttons
 	private Button logoutButton;
 	private Button scienceButton = new Button("Science Button!");
@@ -72,7 +77,6 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 	private TextArea usersArea = new TextArea("Connected users: ");
 	private VBox firstColumn = new VBox(10);
 	private VBox secondColumn = new VBox(10);
-	private ImageView mediaColumn = new ImageView();
 	private Server server = new Server();
 	private Client client = new Client();
 	private TextField dlField = new TextField();
@@ -84,6 +88,7 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 	private VBox images = new VBox(10);
 	private ScrollPane imageScroll = new ScrollPane(getImages());
 	private HBox columnsContainer = new HBox();
+	private ProgressBar pb = new ProgressBar();
 
 	public MainScreenController(GridPane layout, Stage window, Scene currentScene, Scene nextScene, WindowController windowController) throws URISyntaxException, IOException {
 
@@ -127,7 +132,7 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 		dlButton.setOnAction(e -> {
 			if (!this.dlField.getText().equals(null) || !this.dlField.getText().equals(null)) {
 				try {
-					FileHandler.downloadFile(this.window, this.dlField.getText());
+					FileHandler.downloadFile(this.window, this.dlField.getText(), this);
 				} catch (Exception ex) {
 					ex.printStackTrace();
 				}
@@ -144,7 +149,7 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 		this.secondColumn.getChildren().addAll(dlButton, this.dlField, this.imageScroll);
 
 	}
-
+	
 	private void initUsersArea() {
 		
 		this.usersArea.setWrapText(true);
@@ -152,6 +157,15 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 		this.usersArea.setMinSize(500, 50);
 		this.usersArea.setMaxSize(500, 75);
 		this.usersArea.setEditable(false);
+		
+		this.users.addListener(new ListChangeListener<User>() {
+			 
+            @SuppressWarnings("rawtypes")
+			@Override
+            public void onChanged(ListChangeListener.Change change) {
+                
+            }
+        });
 
 	}
 
@@ -179,12 +193,7 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 		this.layout.setPadding(new Insets(10, 10, 10, 10));
 		this.layout.setVgap(10);
 		this.layout.setHgap(10);
-		//this.layout.getChildren().addAll(this.firstColumn, this.secondColumn);
 		this.layout.getChildren().addAll(this.buttonBox, this.columnsContainer);
-		/*GridPane.setColumnIndex(this.firstColumn, 0);
-		GridPane.setColumnIndex(this.secondColumn, 1);
-		GridPane.setValignment(this.firstColumn, VPos.CENTER);
-		GridPane.setValignment(this.secondColumn, VPos.CENTER);*/
 		GridPane.setConstraints(this.buttonBox, 0, 0);
 		GridPane.setConstraints(this.columnsContainer, 0, 1);
 		this.columnsContainer.getChildren().addAll(this.firstColumn, this.secondColumn);

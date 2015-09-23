@@ -6,7 +6,7 @@ import java.util.Date;
 
 public class SystemInfo {
 	
-	public static final DateFormat dateFormat = new SimpleDateFormat("MMMMMMMMM dd HH:mm a");
+	public static final DateFormat dateFormat = new SimpleDateFormat("MMMMMMMMM dd, HH:mm a");
 	public static final Date date = new Date();
 	public static final String a = "";
 	

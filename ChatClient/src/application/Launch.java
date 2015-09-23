@@ -1,5 +1,7 @@
 package application;
 	
+import java.util.List;
+
 import javafx.application.Application;
 import javafx.stage.Stage;
 
@@ -11,7 +13,10 @@ public class Launch extends Application {
 	public void start(Stage primaryStage) {
 		
 		try {
-			new ChatClient().start(new Stage());
+			Parameters params = getParameters();
+			List<String> args = params.getRaw();
+			
+			new ChatClient().launch(new Stage(), args);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

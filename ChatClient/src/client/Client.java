@@ -12,9 +12,13 @@ import sun.audio.AudioData;
 import sun.audio.AudioPlayer;
 import sun.audio.AudioStream;
 import tools.CommandParser;
+import tools.FileHandler;
 import userInteract.LoginScreenController;
 
 public class Client {
+	
+	//booleans
+	private boolean running = true;
 	
 	//Objects
 	private Socket textSocket;
@@ -53,12 +57,12 @@ public class Client {
 		
 		this.ls = ls;
 		String editedName = ls.getUsernameField().getText();
+		int n = 1;
 		while (true) {
 			
-			this.textOutData.writeUTF("*!givename: " + editedName.trim());
+			this.textOutData.writeUTF("*!givename: " + editedName.trim() + " " + FileHandler.getProperty("computer_ID"));
 			
 			String input = this.textInData.readUTF().trim();
-			int n = 1;
 			
 			if (input.equals("*!granted")) {
 				this.setClientname(editedName);
@@ -76,13 +80,15 @@ public class Client {
 				AudioStream audioStream = new AudioStream(stream);
 				AudioPlayer.player.start(audioStream);
 			} catch (Exception e) {
-				e.printStackTrace();
+				if (!this.running) {
+					e.printStackTrace();
+				}
 			}
 		});
 		audioThread.setDaemon(true);
 		audioThread.start();
 		
-		while (true) {
+		while (this.running) {
 			
 			String previous = null;
 			String input = this.textInData.readUTF().trim();
@@ -99,30 +105,14 @@ public class Client {
 					Platform.runLater(() -> {
 						CommandParser.parse(input, ls.getMainController(), null);
 					});
+				} else if (input.split(" ")[0].equalsIgnoreCase("[" + this.clientname + "]")) {
+					ls.getMainController().addMessage(input, "indigo", "black");
 				} else {
-					
-					if (input.split(" ")[0].equalsIgnoreCase("[" + this.clientname + "]")) {
-						ls.getMainController().addMessage(input, "indigo", "black");
-					} else {
-						ls.getMainController().addMessage(input, "darkviolet", "black");
-					}
+					ls.getMainController().addMessage(input, "darkviolet", "black");
 				}
 
 			}
 			previous = input;
-		}
-		
-	}
-	
-	public void closeClient() {
-		
-		try {
-			this.textInData.close();
-			this.textOutData.close();
-			this.textSocket.close();
-		} catch (IOException e) {
-			System.out.println("Some sort of networking problem occured." + "\n" + "I don't really understand java networking yet, so I don't know what.");
-			e.printStackTrace();
 		}
 		
 	}
@@ -269,6 +259,10 @@ public class Client {
 
 	public String getClientname() {
 		return clientname;
+	}
+	
+	public void setRunning(boolean b) {
+		this.running = b;
 	}
 	
 }

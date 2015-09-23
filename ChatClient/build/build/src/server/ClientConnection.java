@@ -78,7 +78,8 @@ public class ClientConnection {
 			
 			this.getServer().getUsers().forEach(e -> {
 				try {
-					e.getSendingData().writeUTF("*![System] " + SystemInfo.getDate() + ": " + this.getClientName() + " has connected.");
+					e.getCC().getSendingData().writeUTF("*![System] " + SystemInfo.getDate() + ": " + this.getClientName() + " has connected.");
+					System.out.println("*![System] " + SystemInfo.getDate() + ": " + this.getClientName() + " has connected.");
 					String users = "Connected users: ";
 					for (int i = 0; i < this.getServer().getUsers().size(); i++) {
 						if (i == 0) {
@@ -109,10 +110,14 @@ public class ClientConnection {
 					
 					if (received.startsWith("*!")) {
 						System.out.println("Received: " + received);
-						try {
-							CommandParser.parse(received, e);
-						} catch (Exception ex) {
-							ex.printStackTrace();
+						if (received.startsWith("*![System]")) {
+							e.getSendingData().writeUTF(received.substring(received.indexOf("[")));
+						} else {
+							try {
+								CommandParser.parse(received, e);
+							} catch (Exception ex) {
+								ex.printStackTrace();
+							}
 						}
 					} else {
 						try {

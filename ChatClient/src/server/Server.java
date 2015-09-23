@@ -1,22 +1,30 @@
 package server;
 
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.ArrayList;
 
+import tools.SystemInfo;
+import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
+import client.User;
+
 public class Server implements Runnable {
 	
 	//Lists
-	private ArrayList<ClientConnection> users = new ArrayList<ClientConnection>();
-	private ArrayList<DataOutputStream> clients = new ArrayList<DataOutputStream>();
+	private ArrayList<User> usersSubList = new ArrayList<User>();
+	private ObservableList<User> users = FXCollections.observableArrayList(usersSubList);
 	
 	//Numbers
 	int clientID = 0;
 	
 	//Booleans
+	private boolean standalone = false;
 	
 	//Strings
+    String initStr = "Connected users:";
+    String str;
 	
 	//Objects
 	private ServerSocket server;
@@ -24,30 +32,39 @@ public class Server implements Runnable {
 	private ServerSocket VoiceServer;
 	private ServerSocket picServer;
 	
-	public void startServer(int port) throws IOException {
+	public void startServer(int port, boolean standalone) throws IOException {
+		
+		this.users.addListener(new ListChangeListener<User>() {
+			 
+            @SuppressWarnings("rawtypes")
+			@Override
+            public void onChanged(ListChangeListener.Change change) {
+            	str = initStr;
+                getUsers().forEach(u -> {
+                	if (str.split(" ").length < 3) {
+                		str = str + " " + u.getDisplayName();
+                	} else {
+                		str = str + ", " + u.getDisplayName();
+                	}
+                });
+                getUsers().forEach(u -> {
+                	try {
+                		change.next();
+                		u.getCC().getSendingData().writeUTF("[System] " + SystemInfo.getDate() + ": " + ((User) change.getAddedSubList().get(0)).getCC().getClientName() + " has connected.");
+                		System.out.println("[System] " + SystemInfo.getDate() + ": " + ((User) change.getAddedSubList().get(0)).getCC().getClientName() + " has connected.");
+						u.getCC().getSendingData().writeUTF("/updateusers " + str);
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+                });
+            }
+        });
 		
 		try {
 			this.server = new ServerSocket(port);
 			this.DLServer = new ServerSocket(port + 1);
 			this.VoiceServer = new ServerSocket(port + 2);
 			this.picServer = new ServerSocket(port + 3);
-
-			
-			Thread mehThread = new Thread (() -> {
-				while (true) {
-					users.forEach(e -> {
-						try {
-							e.getSendingData().writeUTF("This message SHOULD appear every five seconds.");
-							Thread.sleep(5000);
-						} catch (Exception e1) {
-							e1.printStackTrace();
-						}
-					});
-					System.out.println("This message SHOULD appear every five seconds.");
-				}
-			});
-			mehThread.setDaemon(true);
-			//mehThread.start();
 			
 			while (true) {
 				ClientConnection client = new ClientConnection(server.accept(), DLServer.accept(), VoiceServer.accept(), picServer.accept(), clientID++, this);
@@ -72,21 +89,84 @@ public class Server implements Runnable {
 	public ServerSocket getServer() {
 		return server;
 	}
-	
-	public ArrayList<ClientConnection> getUsers() {
-		return this.users;
-	}
-	
-	public ArrayList<DataOutputStream> getClients() {
-		return clients;
+
+	public ArrayList<User> getUsersSubList() {
+		return usersSubList;
 	}
 
-	public void setClients(ArrayList<DataOutputStream> clients) {
-		this.clients = clients;
+	public void setUsersSubList(ArrayList<User> usersSubList) {
+		this.usersSubList = usersSubList;
 	}
 
-	public void addUser(ClientConnection user) {
+	public ObservableList<User> getUsers() {
+		return users;
+	}
+
+	public void setUsers(ObservableList<User> users) {
+		this.users = users;
+	}
+	
+	public void addUser(User user) {
 		this.users.add(user);
+	}
+	
+	public void killUser(String name) {
+		getUsers().forEach(u -> {
+			if (u.getDisplayName().equalsIgnoreCase(name)) {
+				getUsers().remove(u);
+				try {
+					u.getCC().getDLSocket().close();
+					u.getCC().getSocket().close();
+					u.getCC().getVoiceSocket().close();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
+	}
+
+	public int getClientID() {
+		return clientID;
+	}
+
+	public void setClientID(int clientID) {
+		this.clientID = clientID;
+	}
+
+	public boolean isStandalone() {
+		return standalone;
+	}
+
+	public void setStandalone(boolean standalone) {
+		this.standalone = standalone;
+	}
+
+	public ServerSocket getDLServer() {
+		return DLServer;
+	}
+
+	public void setDLServer(ServerSocket dLServer) {
+		DLServer = dLServer;
+	}
+
+	public ServerSocket getVoiceServer() {
+		return VoiceServer;
+	}
+
+	public void setVoiceServer(ServerSocket voiceServer) {
+		VoiceServer = voiceServer;
+	}
+
+	public ServerSocket getPicServer() {
+		return picServer;
+	}
+
+	public void setPicServer(ServerSocket picServer) {
+		this.picServer = picServer;
+	}
+
+	public void setServer(ServerSocket server) {
+		this.server = server;
 	}
 
 	@Override

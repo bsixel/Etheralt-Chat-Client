@@ -2,18 +2,19 @@ package server;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.Iterator;
 
-import javafx.application.Platform;
 import tools.CommandParser;
 import tools.FileHandler;
-import tools.Popups;
 import tools.SystemInfo;
+import client.User;
 
 public class ClientConnection {
+	
+	//booleans
+	private boolean running = true;
 	
 	//Lists
 	
@@ -39,7 +40,7 @@ public class ClientConnection {
 	//Strings
 	private String clientName;
 	
-	public ClientConnection(Socket socket, Socket DLSocket, Socket voiceSocket, Socket picSocket,int clientID, Server server) {
+	public ClientConnection(Socket socket, Socket DLSocket, Socket voiceSocket, Socket picSocket, int clientID, Server server) {
 		this.textSocket = socket;
 		this.voiceSocket = voiceSocket;
 		this.DLSocket = DLSocket;
@@ -63,42 +64,42 @@ public class ClientConnection {
 			while (true) {
 				
 				String input = this.acceptedData.readUTF().trim();
+				String[] args = input.split(" ");
 				if (input.startsWith("*!givename:")) {
-					this.setClientName(input.substring(input.indexOf(" ") + 1));
+					this.setClientName(args[1]);
 
 					synchronized (this.getServer().getUsers()) {
 						if (this.getClientName() == null || this.getClientName() == "") {
-							return;
+							continue;
 						}
 						
 						if (!this.getServer().getUsers().stream().anyMatch(e -> e.equals(this.getClientName()))) {
-							this.getServer().getUsers().add(this);
 							this.getSendingData().writeUTF("*!granted");
+							this.getServer().getUsers().add(new User(this.getClientName(), args[2], this));
 							break;
 						}
 					}
 				}
 			}
 			
-			this.getServer().getClients().add(this.getSendingData());
-			
-			this.getServer().getUsers().forEach(e -> {
+			/*this.getServer().getUsers().forEach(e -> {
 				try {
-					e.getSendingData().writeUTF("*![System] " + SystemInfo.getDate() + ": " + this.getClientName() + " has connected.");
+					e.getCC().getSendingData().writeUTF("[System] " + SystemInfo.getDate() + ": " + this.getClientName() + " has connected.");
+					System.out.println("*![System] " + SystemInfo.getDate() + ": " + this.getClientName() + " has connected.");
 					String users = "Connected users: ";
 					for (int i = 0; i < this.getServer().getUsers().size(); i++) {
 						if (i == 0) {
-							users = users + this.getServer().getUsers().get(i).clientName;
-						} else if (!users.contains(this.getServer().getUsers().get(i).clientName)) {
-							users = users + ", " + this.getServer().getUsers().get(i).clientName;
+							users = users + this.getServer().getUsers().get(i).getCC().clientName;
+						} else if (!users.contains(this.getServer().getUsers().get(i).getCC().clientName)) {
+							users = users + ", " + this.getServer().getUsers().get(i).getCC().clientName;
 						}
 					}
 					
-					e.getSendingData().writeUTF("/adduser: " + users);
+					e.getCC().getSendingData().writeUTF("/adduser: " + users);
 				} catch (Exception e1) {
 					e1.printStackTrace();
 				}
-			});
+			});*/
 			
 			Thread audioThread = new Thread(() -> {
 				byte[] buffer = new byte[8192];
@@ -108,18 +109,50 @@ public class ClientConnection {
 						count = this.voiceAcceptedData.read(buffer);
 						this.voiceSendingData.write(buffer, 0, count);
 					} catch (Exception e1) {
+						if (!this.running) {
 						e1.printStackTrace();
+						}
+						break;
 					}
 				}
 			});
 			audioThread.setDaemon(true);
 			audioThread.start();
 			
-			while (true) {
+			while (this.running) {
 				
 				String received = this.acceptedData.readUTF().trim();
 				if (received == null || received == "") {
 					return;
+				}
+				
+				if (received.equalsIgnoreCase("*![System] " + SystemInfo.getDate() + ": " + this.clientName + " has disconnected.")) {
+					this.getDLSocket().close();
+					this.getSocket().close();
+					this.getVoiceSocket().close();
+					this.acceptedData.close();
+					this.sendingData.close();
+					this.DLAcceptedData.close();
+					this.DLSendingData.close();
+					this.voiceAcceptedData.close();
+					this.voiceSendingData.close();
+					this.picAcceptedData.close();
+					this.picSendingData.close();
+					
+					Iterator<User> iter = this.getServer().getUsers().iterator();
+					/*this.getServer().getUsers().forEach(u -> {
+						if (u.getCC().getClientName().equalsIgnoreCase(getClientName())) {
+							this.getServer().getUsers().remove(u);
+						}
+					});*/
+					iter.forEachRemaining(u -> {
+						if (u.getCC().getClientName().equalsIgnoreCase(getClientName())) {
+							iter.remove();
+						}
+					});
+					this.setRunning(false);
+					Thread.currentThread().interrupt();
+					break;
 				}
 				
 				getServer().getUsers().forEach(e -> {
@@ -127,13 +160,14 @@ public class ClientConnection {
 					if (received.startsWith("*!")) {
 						System.out.println("Received: " + received);
 						try {
-							CommandParser.parse(received, e, this);
+							CommandParser.parse(received, e.getCC(), this);
 						} catch (Exception ex) {
 							ex.printStackTrace();
 						}
 					} else {
 						try {
-							e.getSendingData().writeUTF("[" + this.getClientName() + "] " + SystemInfo.getDate() +  ": " + received);
+							e.getCC().getSendingData().writeUTF("[" + this.getClientName() + "] " + SystemInfo.getDate() +  ": " + received);
+							System.out.println("[" + this.getClientName() + "] " + SystemInfo.getDate() +  ": " + received);
 						} catch (Exception ex) {
 							ex.printStackTrace();
 						}
@@ -146,12 +180,12 @@ public class ClientConnection {
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {
-			getServer().getUsers().remove(this);
 			try {
-				getSendingData().writeUTF("*![System] " + SystemInfo.getDate() + ": " + this.clientName + " has disconnected.");
+				//getSendingData().writeUTF("*![System] " + SystemInfo.getDate() + ": " + this.clientName + " has disconnected.");
 			} catch (Exception ex) {
 				ex.printStackTrace();
 			}
+			getServer().getUsers().remove(this);
 			try {
 				this.textSocket.close();
 			} catch (IOException e1) {
@@ -175,7 +209,7 @@ public class ClientConnection {
 					dlcount = this.DLAcceptedData.read(buffer, 0, 8192);
 					total += dlcount;
 					n += 1;
-					getServer().getUsers().forEach(e -> {
+					getServer().getUsers().stream().map(u -> u.getCC()).forEach(e -> {
 						if (e.clientName.equalsIgnoreCase(args[2]) || args[2].equalsIgnoreCase("all")) {
 							try {
 								e.DLSendingData.write(buffer, 0, dlcount);
@@ -207,10 +241,11 @@ public class ClientConnection {
 					piccount = this.picAcceptedData.read(buffer, 0, 8192);
 					total += piccount;
 					n += 1;
-					getServer().getUsers().forEach(e -> {
+					getServer().getUsers().stream().map(u -> u.getCC()).forEach(e -> {
 						if (e.clientName.equalsIgnoreCase(args[2]) || args[2].equalsIgnoreCase("all")) {
 							try {
-								e.picSendingData.write(buffer, 0, dlcount);
+								//FileHandler.writeToErrorLog("CC wrote " + );
+								e.picSendingData.write(buffer, 0, piccount);
 							} catch (Exception e1) {
 								e1.printStackTrace();
 							}
@@ -346,6 +381,10 @@ public class ClientConnection {
 
 	public void setClientID(int clientID) {
 		this.clientID = clientID;
+	}
+	
+	public void setRunning(boolean b) {
+		this.running = b;
 	}
 	
 }

@@ -1,19 +1,41 @@
 package client;
 
-import java.io.Serializable;
+import server.ClientConnection;
 
-public class User implements Serializable {
+public class User {
 	
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 4209839365630095193L;
-	public String username;
-	public String ID;
+	private String displayName;
+	private String ID;
+	private ClientConnection CC;
 	
-	/*public User(String username) {
-		this.username = username;
-		this.ID = "5";
-	}*/
+	public User(String username, String ID, ClientConnection CC) {
+		this.displayName = username;
+		this.ID = ID;
+		this.CC = CC;
+	}
+	
+	public String getDisplayName() {
+		return displayName;
+	}
+
+	public void setDisplayName(String displayName) {
+		this.displayName = displayName;
+	}
+
+	public String getID() {
+		return ID;
+	}
+
+	public void setID(String iD) {
+		ID = iD;
+	}
+
+	public ClientConnection getCC() {
+		return CC;
+	}
+
+	public void setCC(ClientConnection cC) {
+		CC = cC;
+	}
 	
 }

@@ -12,7 +12,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.util.Properties;
@@ -32,7 +34,7 @@ import client.Client;
 
 public class FileHandler {
 	
-	public static final String chatLogPath = System.getProperty("user.home") + "/Documents/Etheralt Chat Client/chat_log.txt";
+	public static final String chatLogPath = System.getProperty("user.home") + "/Documents/Etheralt Chat Client/chat_log.log";
 	public static final String errorLogPath = System.getProperty("user.home") + "/Documents/Etheralt Chat Client/error_log.log";
 	public static final String downloadsPath = System.getProperty("user.home") + "/Documents/Etheralt Chat Client/Downloads";
 	public static final String picturesPath = System.getProperty("user.home") + "/Documents/Etheralt Chat Client/Pictures";
@@ -234,6 +236,7 @@ public class FileHandler {
 				}
 				String fileType = url.substring(url.lastIndexOf(".") + 1);
 				ReadableByteChannel stream = Channels.newChannel(link.openStream());
+				Platform.runLater(() -> System.out.println("Supposed file length (): " + getFileSize(link)));
 				File file = new File(downloadsPath + "/" + fileName + "." + fileType);
 				FileOutputStream fileStream = new FileOutputStream(file);
 				fileStream.getChannel().transferFrom(stream, 0, Long.MAX_VALUE);
@@ -250,7 +253,21 @@ public class FileHandler {
 		
 	}
 	
-	public static void downloadFile(Stage window, String url) throws IOException {
+	private static int getFileSize(URL url) {
+	    HttpURLConnection conn = null;
+	    try {
+	        conn = (HttpURLConnection) url.openConnection();
+	        conn.setRequestMethod("HEAD");
+	        conn.getInputStream();
+	        return conn.getContentLength();
+	    } catch (IOException e) {
+	        return -1;
+	    } finally {
+	        conn.disconnect();
+	    }
+	}
+	
+	public static void downloadFile(Stage window, String url, MainScreenController sc) throws IOException {
 		
 		Thread dlThread;
 		Runnable downloadFile = () -> {
@@ -273,14 +290,17 @@ public class FileHandler {
 				}
 				String fileType = url.substring(url.lastIndexOf(".") + 1);
 				ReadableByteChannel stream = Channels.newChannel(link.openStream());
+				Platform.runLater(() -> System.out.println("Supposed file length: " + getFileSize(link)));
 				String fileName = url.substring(url.lastIndexOf("/") + 1, url.lastIndexOf("."));
 				File file = new File(FileHandler.downloadsPath + "/" + fileName + "." + fileType);
 				FileOutputStream fileStream = new FileOutputStream(file);
+				int total = 0;
+				int count;
 				fileStream.getChannel().transferFrom(stream, 0, Long.MAX_VALUE);
 				fileStream.close();
 				stream.close();
 				Platform.runLater(() -> {
-					Popups.startInfoDlg("Download complete.", "Download of " + fileName + "." + fileType + " comeplete.");
+					Popups.startInfoDlg("Download complete.", "Download of " + fileName + "." + fileType + " complete.");
 				});
 				Thread.currentThread().interrupt();
 				System.out.println("Download of " + fileName + " complete.");
@@ -399,8 +419,11 @@ public class FileHandler {
 				byte[] fileBuffer = new byte[8192];
 				fileOut = new FileOutputStream(file);
 				while (total != length) {
+					FileHandler.writeToErrorLog("Testing logging. Also debugging that img thing. Length: " + length + "; count: " + count + "; Total: " + total + " (this was the first go)");
+					FileHandler.writeToErrorLog("Testing logging. Also debugging that img thing. Available?: " + sc.getClient().getPicInData().available());
 					count = sc.getClient().getPicInData().read(fileBuffer, 0, 8192);
 					total += count;
+					FileHandler.writeToErrorLog("Testing logging. Also debugging that img thing. Length: " + length + "; count: " + count + "; Total: " + total + " (this was the second go)");
 					fileOut.write(fileBuffer, 0, count);
 					fileOut.flush();
 				}
@@ -418,7 +441,7 @@ public class FileHandler {
 				});
 				Thread.currentThread().interrupt();
 			} catch (IOException e) {
-				Platform.runLater(() ->Popups.startInfoDlg("Download Error", "Failed to download file!"));
+				Platform.runLater(() -> Popups.startInfoDlg("Download Error", "Failed to download picture!"));
 				System.out.println("Failed send count: " + count);
 				e.printStackTrace();
 			}

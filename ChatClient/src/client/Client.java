@@ -19,6 +19,7 @@ public class Client {
 	
 	//booleans
 	private boolean running = true;
+	private boolean milTime = true;
 	
 	//Objects
 	private Socket textSocket;
@@ -39,8 +40,9 @@ public class Client {
 	
 	//Strings
 	private String clientname;
+
 	
-	public void startClient(String IP, int port, LoginScreenController ls) throws IOException {
+	public void startClient(String IP, int port, LoginScreenController ls, Object lock, String password) throws IOException {
 		
 		this.textSocket = new Socket(InetAddress.getByName(IP), port);
 		this.textInData = new DataInputStream(this.textSocket.getInputStream());
@@ -54,13 +56,13 @@ public class Client {
 		this.picSocket = new Socket(InetAddress.getByName(IP), port + 3);
 		this.picInData = new DataInputStream(this.picSocket.getInputStream());
 		this.picOutData = new DataOutputStream(this.picSocket.getOutputStream());
-		
+
 		this.ls = ls;
 		String editedName = ls.getUsernameField().getText();
 		int n = 1;
 		while (true) {
 			
-			this.textOutData.writeUTF("*!givename: " + editedName.trim() + " " + FileHandler.getProperty("computer_ID"));
+			this.textOutData.writeUTF("*!givename: " + editedName.trim() + " " + FileHandler.getProperty("computer_ID") + " " + password);
 			
 			String input = this.textInData.readUTF().trim();
 			
@@ -72,6 +74,14 @@ public class Client {
 				editedName = editedName + n;
 				n++;
 			}
+		}
+		
+		synchronized (lock) {
+			ls.toggleLock();
+			lock.notifyAll();
+			Platform.runLater(() -> {
+				System.out.println("Unlocked from client.");
+			});
 		}
 		
 		Thread audioThread = new Thread(() -> {
@@ -87,7 +97,7 @@ public class Client {
 		});
 		audioThread.setDaemon(true);
 		audioThread.start();
-		
+		try {
 		while (this.running) {
 			
 			String previous = null;
@@ -114,7 +124,9 @@ public class Client {
 			}
 			previous = input;
 		}
-		
+		} catch (java.io.EOFException e) {
+			System.err.println("Error on clientside attempt to get data: whileRunning loop issue.");
+		}
 	}
 
 	public Socket getClientSocket() {
@@ -263,6 +275,14 @@ public class Client {
 	
 	public void setRunning(boolean b) {
 		this.running = b;
+	}
+	
+	public void setMilTime(boolean b) {
+		this.milTime = b;
+	}
+	
+	public boolean getMilTime() {
+		return this.milTime;
 	}
 	
 }

@@ -7,10 +7,10 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 
+import application.ChatClient;
+import application.WindowController;
+import client.Client;
 import javafx.application.Platform;
-import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
-import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -32,23 +32,15 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import server.Server;
 import tools.AudioHandler;
 import tools.CommandParser;
 import tools.FileHandler;
-import tools.Popups;
 import tools.SystemInfo;
-import application.ChatClient;
-import application.WindowController;
-import client.Client;
-import client.User;
 
 public class MainScreenController implements EventHandler<KeyEvent> {
 
 	//Lists
 	private ArrayList<Thread> dlThreads = new ArrayList<Thread>();
-	private ArrayList<User> usersSubList = new ArrayList<User>();
-	private ObservableList<User> users = FXCollections.observableArrayList(usersSubList);
 	
 	//Buttons
 	private Button logoutButton;
@@ -77,7 +69,6 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 	private TextArea usersArea = new TextArea("Connected users: ");
 	private VBox firstColumn = new VBox(10);
 	private VBox secondColumn = new VBox(10);
-	private Server server = new Server();
 	private Client client = new Client();
 	private TextField dlField = new TextField();
 	private ChatBox chatBox = new ChatBox();
@@ -157,15 +148,6 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 		this.usersArea.setMinSize(500, 50);
 		this.usersArea.setMaxSize(500, 75);
 		this.usersArea.setEditable(false);
-		
-		this.users.addListener(new ListChangeListener<User>() {
-			 
-            @SuppressWarnings("rawtypes")
-			@Override
-            public void onChanged(ListChangeListener.Change change) {
-                
-            }
-        });
 
 	}
 
@@ -364,14 +346,6 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 
 	public boolean getIsHosting() {
 		return this.isHosting;
-	}
-
-	public Server getServer() {
-		return this.server;
-	}
-
-	public void setServer(Server hostServer) {
-		this.server = hostServer;
 	}
 
 	public Client getClient() {

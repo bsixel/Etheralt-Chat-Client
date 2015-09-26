@@ -1,6 +1,6 @@
 .button {
 	
-	-fx-background-color: #484848;
+	-fx-background-color: black;
 	-fx-background-radius: 10;
 	-fx-border-radius: 10;
 	-fx-focus-color: transparent;
@@ -11,7 +11,7 @@
 
 .toggle-button {
 	
-	-fx-background-color: #484848;
+	-fx-background-color: black;
 	-fx-background-radius: 10;
 	-fx-border-radius: 10;
 	-fx-focus-color: transparent;

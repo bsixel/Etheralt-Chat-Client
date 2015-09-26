@@ -1,14 +1,14 @@
 package userInteract;
 
-import java.net.UnknownHostException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import application.WindowController;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
@@ -18,11 +18,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
-import server.Server;
 import tools.FileHandler;
-import tools.Popups;
 import tools.SystemInfo;
-import application.WindowController;
 
 
 
@@ -37,6 +34,8 @@ public class LoginScreenController {
 	//Numbers
 	
 	//Booleans
+	boolean locked = true;
+	private boolean stop= false;
 	
 	//Strings
 	private String loginString = "Please enter your display name.";
@@ -52,35 +51,10 @@ public class LoginScreenController {
 	private TextField usernameField;
 	private WindowController windowController;
 	private MainScreenController mainController;
-	private CheckBox hostBox = new CheckBox();
-	private Label hostLabel = new Label("Host?");
-	private HBox hostLayout = new HBox(10);
 	private HBox IPLayout = new HBox(10);
 	private TextField IPField;
 	private Label IPLabel;
 	private TextField portField;
-	
-	private void initHostInfo() {
-		
-		this.getHostBox().allowIndeterminateProperty().set(false);
-		this.hostLayout.getChildren().addAll(this.hostLabel, this.getHostBox());
-		this.hostLayout.setAlignment(Pos.CENTER);
-		this.getHostBox().setTooltip(new Tooltip("Enable/Disable Host"));
-		this.getHostBox().selectedProperty().addListener(e -> {
-			
-			if (this.IPLabel.getText().equals("Please enter a host IP address and port: ")) {
-				this.IPLabel.setText("Port: ");
-				this.IPLayout.getChildren().remove(this.getIPField());
-			} else if (this.IPLabel.getText().equals("Port: ")) {
-				this.IPLabel.setText("Please enter a host IP address and port: ");
-				this.IPLayout.getChildren().add(0, this.getIPField());
-			}
-			
-			this.getIPField().setVisible(!this.getIPField().isVisible());
-			
-		});
-		
-	}
 	
 	private void initUsernameLabel() {
 		
@@ -109,15 +83,9 @@ public class LoginScreenController {
 		
 		this.getIPField().addEventHandler(KeyEvent.KEY_PRESSED, key -> {
 			if (key.getCode() == KeyCode.ENTER) {
-				if (this.getHostBox().isSelected()) {
-					try {
-						login(true);
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-				} else if (!this.getHostBox().isSelected() && (getIPField().getText().contains(" ") || getIPField().getText().equals("") || getIPField().getText().equals(null)) && (getIPField().getText().contains(" ") || getIPField().getText().equals("") || getIPField().getText().equals(null))) {
+				if ((getIPField().getText().contains(" ") || getIPField().getText().equals("") || getIPField().getText().equals(null)) && (getIPField().getText().contains(" ") || getIPField().getText().equals("") || getIPField().getText().equals(null))) {
 					Popups.startInfoDlg("Invalid IP", "Please enter a valid host.");
-				} else if (!this.getHostBox().isSelected() && !(getIPField().getText().contains(" ") || getIPField().getText().equals("")) && (getIPField().getText().contains(" ") || getIPField().getText().equals("") || getIPField().getText().equals(null))) {
+				} else if (!(getIPField().getText().contains(" ") || getIPField().getText().equals("")) && (getIPField().getText().contains(" ") || getIPField().getText().equals("") || getIPField().getText().equals(null))) {
 					try {
 						login(false);
 					} catch (Exception e) {
@@ -161,15 +129,9 @@ public class LoginScreenController {
 		this.getUsernameField().setPrefSize(215, 15);
 		this.getUsernameField().addEventHandler(KeyEvent.KEY_PRESSED, key -> {
 			if (key.getCode() == KeyCode.ENTER) {
-				if (this.getHostBox().isSelected()) {
-					try {
-						login(true);
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-				} else if (!this.getHostBox().isSelected() && (getIPField().getText().contains(" ") || getIPField().getText().equals("") || getIPField().getText().equals(null))) {
+				if ((getIPField().getText().contains(" ") || getIPField().getText().equals("") || getIPField().getText().equals(null))) {
 					Popups.startInfoDlg("Invalid IP", "Please enter a valid host IP address.");
-				} else if (!this.getHostBox().isSelected() && !(getIPField().getText().contains(" ") || getIPField().getText().equals(""))) {
+				} else if (!(getIPField().getText().contains(" ") || getIPField().getText().equals(""))) {
 					try {
 						login(false);
 					} catch (Exception e) {
@@ -192,7 +154,7 @@ public class LoginScreenController {
 		
 	}
 	
-	private void login(boolean b) throws UnknownHostException {
+	private void login(boolean b) throws NumberFormatException, IOException {
 		if (getUsernameField().getText().contains(" ") || getUsernameField().getText().equals("")) {
 			Popups.startInfoDlg("", "Please enter a name with no spaces.");
 		} else if (!getUsernameField().getText().contains(" ")) {
@@ -202,58 +164,49 @@ public class LoginScreenController {
 			Label userLabel = this.getMainController().getUsernameLabel();
 			String str = " Logged in as " + this.username + " ";
 			userLabel.setText(str);
-			getMainController().setServer(new Server());
-			
-			if (b) {
-				Runnable startServer = () -> {
-					try {
-						getMainController().getServer().startServer(Integer.parseInt(this.getPortField().getText()), false);
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-				};
+			Object lock = new Object();
+			String pass = Popups.startAnsDlg("Enter server password:");
 				Runnable startClient = () -> {
-					try {
-						getMainController().getClient().startClient("127.0.0.1", Integer.parseInt(this.getPortField().getText()), this);
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-				};
-				Thread serverThread = new Thread(startServer);
-				serverThread.setDaemon(true);
-				serverThread.start();
-				
-				Thread clientThread = new Thread(startClient);
-				clientThread.setDaemon(true);
-				clientThread.start();
-				
-			} else {
-				
-				Runnable startClient = () -> {
-					try {
-						getMainController().getClient().startClient(this.getIPField().getText(), Integer.parseInt(this.getPortField().getText()), this);
-					} catch (Exception e) {
-						e.printStackTrace();
+					synchronized (lock) {
+						try {
+							getMainController().getClient().startClient(this.getIPField().getText(), Integer.parseInt(this.getPortField().getText()), this, lock, pass);
+						} catch (Exception e) {
+							System.err.println("Line 241 ish: Unable to start client; incorrect password or invalid server.");
+							setStop(true);
+							lock.notifyAll();
+						}
 					}
 				};
 				
 				Thread clientThread = new Thread(startClient);
 				clientThread.setDaemon(true);
 				clientThread.start();
-				
+			synchronized (lock) {
+				try {
+					System.out.println(locked);
+					while (locked) {
+						lock.wait();
+					}
+					if (isStopped()) {
+						Popups.startInfoDlg("Connection error!", "Unable to connect to server: " + System.lineSeparator() + "Connection refused or incorrect password.");
+						return;
+					}
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				this.mainController.scrollToBottom();
+				FileHandler.saveProperties(this);
+				this.window.setScene(chatScreen);
+				window.setUserData(username);
+				window.setWidth(1075);
+				window.setHeight(750);
+				this.window.setMinWidth(1075);
+				this.window.setMinHeight(750);
+				window.setX((WindowController.getScreenWidth() / 2) - window.getWidth() / 2);
+				window.setY((WindowController.getScreenHeight() / 2) - window.getHeight() / 2);
+				window.setResizable(true);
+				this.IPLabel.setText("Please enter a host IP address and port: ");
 			}
-			this.mainController.scrollToBottom();
-			FileHandler.saveProperties(this);
-			this.window.setScene(chatScreen);
-			window.setUserData(username);
-			window.setWidth(1075);
-			window.setHeight(750);
-			this.window.setMinWidth(1075);
-			this.window.setMinHeight(750);
-			window.setX((WindowController.getScreenWidth() / 2) - window.getWidth() / 2);
-			window.setY((WindowController.getScreenHeight() / 2) - window.getHeight() / 2);
-			window.setResizable(true);
-			this.IPLabel.setText("Please enter a host IP address and port: ");
 			
 		}
 	}
@@ -263,15 +216,9 @@ public class LoginScreenController {
 		this.loginButton = new Button();
 		this.loginButton.setText("Log in");
 		this.loginButton.addEventHandler(ActionEvent.ACTION, e -> {
-			if (this.getHostBox().isSelected()) {
-				try {
-					login(true);
-				} catch (Exception e1) {
-					e1.printStackTrace();
-				}
-			} else if (!this.getHostBox().isSelected() && (getIPField().getText().contains(" ") || getIPField().getText().equals("") || getIPField().getText().equals(null))) {
+			if (getIPField().getText().contains(" ") || getIPField().getText().equals("") || getIPField().getText().equals(null)) {
 				Popups.startInfoDlg("Invalid IP", "Please enter a valid host IP address.");
-			} else if (!this.getHostBox().isSelected() && !(getIPField().getText().contains(" ") || getIPField().getText().equals(""))) {
+			} else if (!(getIPField().getText().contains(" ") || getIPField().getText().equals(""))) {
 				try {
 					login(false);
 				} catch (Exception e1) {
@@ -288,8 +235,7 @@ public class LoginScreenController {
 		initUserField();
 		initLoginButton();
 		initUsernameLabel();
-		initHostInfo();
-		this.layout.getChildren().addAll(this.loginButton, this.hostLayout);
+		this.layout.getChildren().addAll(this.loginButton);
 		initIPField();
 		FileHandler.initUserPrefs();
 		window.setWidth(250);
@@ -348,14 +294,6 @@ public class LoginScreenController {
 		this.portField = portField;
 	}
 
-	public CheckBox getHostBox() {
-		return hostBox;
-	}
-
-	public void setHostBox(CheckBox hostBox) {
-		this.hostBox = hostBox;
-	}
-
 	public MainScreenController getMainController() {
 		return mainController;
 	}
@@ -368,8 +306,16 @@ public class LoginScreenController {
 		this.username = name;
 	}
 	
-	public LoginScreenController getThis() {
-		return this;
+	public void toggleLock() {
+		this.locked = !this.locked;
+	}
+
+	public boolean isStopped() {
+		return stop;
+	}
+
+	public void setStop(boolean stop) {
+		this.stop = stop;
 	}
 	
 }

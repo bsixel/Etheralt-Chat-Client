@@ -4,17 +4,16 @@ import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 
+import client.Client;
 import javafx.application.Platform;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
-import server.ClientConnection;
 import userInteract.ChatText;
 import userInteract.MainScreenController;
-import client.Client;
+import userInteract.Popups;
 
 public class CommandParser {
 	
@@ -44,7 +43,7 @@ public class CommandParser {
 				String toSend = "*!tell: " + sc.getClient().getClientName() + " " + message;
 				System.out.println("To send: " + toSend);
 				sc.getClient().getClientSendingData().writeUTF(toSend);
-				sc.addMessage("To " + "[" + args[1] + "] " + SystemInfo.getDate() + ": " + message.substring(message.indexOf(" ") + 1), "green", "black");
+				sc.addMessage("To " + System.lineSeparator() + "[" + args[1] + "] " + SystemInfo.getDate() + ": " + message.substring(message.indexOf(" ") + 1), "green", "black");
 				sc.getChatField().clear();
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -228,100 +227,6 @@ public class CommandParser {
 			sc.getChatField().clear();
 		} catch (Exception e) {
 			e.printStackTrace();
-		}
-	}
-	
-	public static void parse(String input, ClientConnection client, ClientConnection selfClient) {
-
-		String[] args = input.split(" ");
-		String command = args[0];
-
-		if (command.equals("*!tell:")) {
-			if (client.getClientName().equalsIgnoreCase(args[2]) || args[2].equals("all")) {
-				try {
-					System.out.println("Message sent from " + args[1] + " to " + args[2]);
-					client.getSendingData().writeUTF("From " + "[" + args[1] + " ] " + SystemInfo.getDate() +  ": " + input.substring(nthOccurrence(input, " ", 2)));
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		} else if (command.equalsIgnoreCase("*!open:")) {
-			if (!args[1].equalsIgnoreCase("Morthaden") && (client.getClientName().equalsIgnoreCase(args[1]) || args[1].equals("all"))) {
-				try {
-					client.getSendingData().writeUTF(input);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		} else if (command.equalsIgnoreCase("*!link:")) {
-			if (client.getClientName().equalsIgnoreCase(args[1]) || args[1].equals("all")) {
-				try {
-					//client.getSendingData().writeUTF(input);
-					client.getSendingData().writeUTF("/linkopen" + input.substring(input.indexOf(" ")));
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		} else if (command.equalsIgnoreCase("*!users:")) {
-			if (client.getClientName().equalsIgnoreCase(args[1])) {
-				try {
-					client.getSendingData().writeUTF("Connected users: " + client.getServer().getUsers().stream().map(e -> e.getCC().getClientName()).collect(Collectors.toList()).toString());
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		} else if (command.equalsIgnoreCase("*!batch:")) {
-			if (client.getClientName().equalsIgnoreCase(args[1]) || args[1].equals("all")) {
-				try {
-					client.getSendingData().writeUTF(input);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		} else if (command.equalsIgnoreCase("*!sendfile:")) {
-			if (client.getClientName().equalsIgnoreCase(args[2]) || args[2].equals("all")) {
-				try {
-					System.out.println("Received a *!sendfile, sending a /getfile");
-					client.getSendingData().writeUTF("/getfile" + input.substring(input.indexOf(" ")));
-					selfClient.sendFile(input);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		} else if (command.equalsIgnoreCase("*!declineDL:")) {
-			if (client.getClientName().equalsIgnoreCase(args[1])) {
-				try {
-					client.getSendingData().writeUTF("/declineDL" + input.substring(input.indexOf(" ")));
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		} else if (command.equalsIgnoreCase("*!sendimg:")) {
-			if (client.getClientName().equalsIgnoreCase(args[2]) || args[2].equals("all")) {
-				try {
-					System.out.println("Received a *!sendimg, sending a /getimg");
-					client.getSendingData().writeUTF("/getimg" + input.substring(input.indexOf(" ")));
-					selfClient.sendImg(input);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		} else if (command.equalsIgnoreCase("*!declineimg:")) {
-			if (client.getClientName().equalsIgnoreCase(args[1])) {
-				try {
-					client.getSendingData().writeUTF("/declineimg" + input.substring(input.indexOf(" ")));
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		} else if (command.equalsIgnoreCase("*!youtube")) {
-			if (client.getClientName().equalsIgnoreCase(args[1]) || args[1] .equalsIgnoreCase("all")) {
-				try {
-					client.getSendingData().writeUTF("/youtubeplay" + input.substring(input.indexOf(" ")));
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
 		}
 	}
 	

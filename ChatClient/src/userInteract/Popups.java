@@ -1,11 +1,14 @@
-package tools;
+package userInteract;
 
 import java.io.File;
 
+import application.ChatClient;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
@@ -99,6 +102,43 @@ public class Popups {
 		popup.showAndWait();
 		return b;
 	}
+	
+	public static String startAnsDlg(String question) {
+		Stage popup = new Stage(StageStyle.UNDECORATED);
+		VBox layout = new VBox(5);
+		layout.setAlignment(Pos.CENTER);
+		Scene scene = new Scene(layout, popup.getWidth(), popup.getHeight());
+		popup.setScene(scene);
+		scene.setFill(Color.SILVER);
+		popup.setOnCloseRequest(e -> b = false);
+		PasswordField passField = new PasswordField();
+		Button submitButton = new Button("Submit");
+		submitButton.setOnAction(e -> {
+			b = true;
+			popup.close();
+		});
+		submitButton.addEventHandler(KeyEvent.KEY_PRESSED, key -> {
+			if (key.getCode() == KeyCode.ENTER) {
+				submitButton.fire();
+			}
+		});
+		popup.addEventHandler(KeyEvent.KEY_PRESSED, key -> {
+			if (key.getCode() == KeyCode.ESCAPE) {
+				popup.close();
+			}
+		});
+		popup.initModality(Modality.APPLICATION_MODAL);
+		popup.setResizable(false);
+		popup.setTitle("Confirmation Dialog");
+		popup.setWidth(250);
+		popup.setHeight(115);
+		Label questionLabel = new Label();
+		questionLabel.setText(question);
+		layout.getChildren().addAll(questionLabel, passField, submitButton);
+		popup.setAlwaysOnTop(true);
+		popup.showAndWait();
+		return passField.getText();
+	}
 
 	public static File startFileOpener(String title) {
 		
@@ -117,6 +157,22 @@ public class Popups {
 		fileChooser.setTitle(title);
 		fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
 		fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("All Files", "*.*"), new FileChooser.ExtensionFilter(ext + " Files", "*." + ext));
+		file = fileChooser.showSaveDialog(popup);
+		
+		return file;
+		
+	}
+	
+	public static File startFileSaver(String title, String ext, String name) {
+		
+		Stage popup = new Stage();
+		FileChooser fileChooser = new FileChooser();
+		fileChooser.setTitle(title);
+		fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
+		fileChooser.setInitialFileName(name);
+		FileChooser.ExtensionFilter prefFilter = new FileChooser.ExtensionFilter(ext + " Files", "*." + ext);
+		fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("All Files", "*.*"), prefFilter);
+		fileChooser.setSelectedExtensionFilter(prefFilter);
 		file = fileChooser.showSaveDialog(popup);
 		
 		return file;
@@ -149,15 +205,17 @@ public class Popups {
 	
 	public static void startImageViewer(String title, Image img) {
 		
-		Stage popup = new Stage(StageStyle.UTILITY);
+		Stage popup = new Stage(StageStyle.UNIFIED);
 		VBox layout = new VBox(10);
 		layout.setAlignment(Pos.CENTER);
-		popup.setWidth(750);
-		popup.setHeight(750);
+		layout.setStyle("-fx-background-color: black");
 		popup.setResizable(true);
 		popup.setScene(new Scene(layout));
+		popup.getScene().getStylesheets().add(ChatClient.class.getResource("cyprus.css").toExternalForm());
 		ImageView imgview = new ImageView(img);
 		layout.getChildren().add(imgview);
+		popup.setWidth(img.getWidth() + 15);
+		popup.setHeight(img.getHeight() + 50);
 		popup.show();
 		
 	}

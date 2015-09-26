@@ -30,6 +30,7 @@ import userInteract.ChatBox;
 import userInteract.ChatText;
 import userInteract.LoginScreenController;
 import userInteract.MainScreenController;
+import userInteract.Popups;
 import client.Client;
 
 public class FileHandler {
@@ -95,7 +96,7 @@ public class FileHandler {
 		
 	}
 	
-	public static void initUserPrefs() {
+	public static boolean initUserPrefs() {
 		
 		try {
 			File configFile = new File(configPath);
@@ -107,13 +108,17 @@ public class FileHandler {
 			defaultProperties.setProperty("last_username", "");
 			defaultProperties.setProperty("last_IP", "");
 			defaultProperties.setProperty("last_port", "");
+			defaultProperties.setProperty("milTime", "");
 			
 			Properties userProperties = new Properties(defaultProperties);
 			userProperties.load(configReader);
+			boolean b = Boolean.parseBoolean(getProperty("milTime"));
 			configReader.close();
+			return b;
 			
-		}catch (IOException e) {
+		} catch (IOException e) {
 			e.printStackTrace();
+			return true;
 		}
 		
 		
@@ -300,7 +305,13 @@ public class FileHandler {
 				fileStream.close();
 				stream.close();
 				Platform.runLater(() -> {
-					Popups.startInfoDlg("Download complete.", "Download of " + fileName + "." + fileType + " complete.");
+					if (Popups.startConfDlg("Download complete. Open folder?")) {
+						try {
+							Desktop.getDesktop().open(new File(downloadsPath));
+						} catch (Exception e1) {
+							Popups.startInfoDlg("Error: Unable to open downloads folder.", "Unable to open downloads folder! May be an OS issue. \n Please report this as a bug.");
+						}
+					}
 				});
 				Thread.currentThread().interrupt();
 				System.out.println("Download of " + fileName + " complete.");
@@ -327,13 +338,7 @@ public class FileHandler {
 			}
 			
 			properties.setProperty("last_username", ls.getUsernameField().getText());
-			if (!ls.getHostBox().isSelected()) {
-				properties.setProperty("last_IP", ls.getIPField().getText());
-			} else if (ls.getHostBox().isSelected() && getProperty("last_IP") != null) {
-				properties.setProperty("last_IP", getProperty("last_IP"));
-			} else {
-				properties.setProperty("last_IP", "");
-			}
+			properties.setProperty("last_IP", ls.getIPField().getText());
 			properties.setProperty("last_port", ls.getPortField().getText());
 			
 			OutputStream writer = new FileOutputStream(configFile);

@@ -5,15 +5,22 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.stream.Collectors;
 
-import server.ClientConnection;
-import userInteract.MainScreenController;
 import client.Client;
+import javafx.application.Platform;
+import javafx.scene.web.WebEngine;
+import javafx.scene.web.WebView;
+import server.ClientConnection;
+import userInteract.ChatText;
+import userInteract.MainScreenController;
+import userInteract.Popups;
 
 public class CommandParser {
 	
 	private static Desktop desktop = Desktop.getDesktop();
+	private static ArrayList commandList = new ArrayList<Command>();
 	
 	public static int nthOccurrence(String str, String c, int n) {
 	    int pos = str.indexOf(c, 0);
@@ -39,7 +46,7 @@ public class CommandParser {
 				String toSend = "*!tell: " + sc.getClient().getClientName() + " " + message;
 				System.out.println("To send: " + toSend);
 				sc.getClient().getClientSendingData().writeUTF(toSend);
-				sc.addMessage("To " + "[" + args[1] + "] " + SystemInfo.getDate() + ": " + message.substring(message.indexOf(" ") + 1), "green", "black");
+				sc.addMessage("To " + System.lineSeparator() + "[" + args[1] + "] " + SystemInfo.getDate() + ": " + message.substring(message.indexOf(" ") + 1), "green", "black");
 				sc.getChatField().clear();
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -51,6 +58,7 @@ public class CommandParser {
 			sc.getUsersArea().setText(input.substring("/adduser: ".length()));
 		} else if (command.equalsIgnoreCase("/purge")) {
 			sc.getChatBox().getChildren().clear();
+			sc.getImages().getChildren().clear();
 			sc.getChatField().clear();
 			new File(FileHandler.chatLogPath).delete();
 		} else if (command.equalsIgnoreCase("/open")) {
@@ -77,18 +85,7 @@ public class CommandParser {
 				e.printStackTrace();
 			}
 		} else if (command.equalsIgnoreCase("/sendfile")) {
-			try {
-				sc.addMessage("Attempted to send file to " + args[1] + ".", "blue", "black");
-				File file = Popups.startFileOpener("Select a file to send.");
-				Thread thread = new Thread(FileHandler.sendFile(args[1], file, sc.getClient()), "DLThread for " + file.getName());
-				thread.setDaemon(true);
-				sc.getDlThreads().add(thread);
-				thread.start();
-				
-				sc.getChatField().clear();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+			sendFile(input, sc);
 		} else if (command.equalsIgnoreCase("/batch")) {
 			try {
 				sc.addMessage("Batched " + args[1] + " with " + args[2] + ".", "blue", "black");
@@ -102,7 +99,7 @@ public class CommandParser {
 			if (sc.getClient().getClientName().equalsIgnoreCase(args[2]) || args[2].equals("all")) {
 			
 				if (Popups.startConfDlg("Accept file from " + args[1] + "?")) {
-					File file = Popups.startFileSaver("Select a download location.", args[3].substring(args[3].lastIndexOf(".") + 1));
+					File file = Popups.startFileSaver("Select a download location.", args[3].substring(args[3].lastIndexOf(".") + 1), args[3]);
 					Thread thread = new Thread(FileHandler.dlFile(sc, file, Integer.parseInt(args[4])));
 					thread.setDaemon(true);
 					sc.getDlThreads().add(thread);
@@ -120,27 +117,123 @@ public class CommandParser {
 				if (e.getName().equalsIgnoreCase("DLThread for " + args[1])) {
 					e.interrupt();
 				}
-			});;
-		}/* else if (command.equalsIgnoreCase("/img")) {
-			File img = Popups.startPictureOpener("Select a picture to send.");
-			Thread thread = new Thread(FileHandler.sendImage(args[1], img, sc.getClient()), "DLThread for " + img.getName());
+			});
+		} else if (command.equalsIgnoreCase("/img")) {
+			try {
+				sc.addMessage("Attempted to send file to " + args[1] + ".", "blue", "black");
+				File file = Popups.startFileOpener("Select an image to send.");
+				Thread thread = new Thread(FileHandler.sendPic(args[1], file, sc.getClient()), "PicThread for " + file.getName());
+				thread.setDaemon(true);
+				sc.getDlThreads().add(thread);
+				thread.start();
+				
+				sc.getChatField().clear();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		} else if (command.equalsIgnoreCase("/getimg")) {
+			if (sc.getClient().getClientName().equalsIgnoreCase(args[2]) || args[2].equals("all")) {
+				File file = new File(FileHandler.picturesPath + "/" + args[3]);
+				Thread thread = new Thread(FileHandler.dlPic(sc, file, Integer.parseInt(args[4])));
+				thread.setDaemon(true);
+				sc.getDlThreads().add(thread);
+				thread.start();
+			}
+		} else if (command.equalsIgnoreCase("/declineimg")) {
+			sc.getDlThreads().forEach(e -> {
+				if (e.getName().equalsIgnoreCase("PicThread for " + args[1])) {
+					e.interrupt();
+				}
+			});
+		} else if (command.equalsIgnoreCase("/youtube")) {
+			try {
+				sc.getClient().getClientSendingData().writeUTF("*!youtube" + input.substring(input.indexOf(" ")));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			sc.getChatField().clear();
+		} else if (command.equalsIgnoreCase("/youtubeplay")) {
+			if (sc.getClient().getClientName().equalsIgnoreCase(args[1]) || args[1] .equalsIgnoreCase("all")) {
+				
+			}
+		} else if (command.equalsIgnoreCase("/linkopen")) {
+
+			if (input.contains("youtube")) {
+				try {
+					desktop.browse(new URI(input.split(" ", 3)[2]));
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			} else {
+				WebView webview = new WebView();
+				webview.setOnMouseClicked(click -> {
+					click.consume();
+					if (click.getClickCount() == 2) {
+						try {
+							desktop.browse(new URI(input.split(" ", 3)[2]));
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+					}
+				});
+				webview.setPrefSize(500, 500);
+				WebEngine webengine = webview.getEngine();
+				webengine.load(args[2]);
+				sc.getImages().getChildren().add(webview);
+			}
+		} else if (command.equalsIgnoreCase("/clearmedia")) {
+			sc.getChatField().clear();
+			sc.getImages().getChildren().stream().filter(e -> e instanceof ChatText).collect(Collectors.toList());
+			sc.getImages().getChildren().clear();
+		} else if (command.equalsIgnoreCase("/browse")) {
+			WebView webview = new WebView();
+			webview.setOnMouseClicked(click -> {
+				if (click.getClickCount() == 2) {
+					try {
+						desktop.browse(new URI("https://www.google.com"));
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+			});
+			webview.setPrefSize(500, 500);
+			WebEngine webengine = webview.getEngine();
+			webengine.load("https://www.google.com");
+			sc.getImages().getChildren().add(webview);
+		} else if (command.equalsIgnoreCase("/audio")) {
+			sc.getChatField().clear();
+			Platform.runLater(() -> {
+				File file = Popups.startFileOpener("Select audio file to transmit.");
+				Thread audioThread = new Thread(() -> {
+					FileHandler.transmitAudio(sc, file);
+				});
+				audioThread.setDaemon(true);
+				audioThread.start();
+			});
+			
+		} else if (command.equalsIgnoreCase("/updateusers")) {
+			sc.getUsersArea().setText(input.substring("/updateusers ".length()));
+		}
+		
+	}
+	
+	public static void sendFile(String input, MainScreenController sc) {
+		String[] args = input.split(" ");
+		try {
+			sc.addMessage("Attempted to send file to " + args[1] + ".", "blue", "black");
+			File file = Popups.startFileOpener("Select a file to send.");
+			Thread thread = new Thread(FileHandler.sendFile(args[1], file, sc.getClient()), "DLThread for " + file.getName());
 			thread.setDaemon(true);
 			sc.getDlThreads().add(thread);
 			thread.start();
 			
 			sc.getChatField().clear();
-		} else if (command.equalsIgnoreCase("/getimg")) {
-			System.out.println("Hot potato args4: " + args[4]);
-			if (sc.getClient().getClientName().equalsIgnoreCase(args[2]) || args[2].equals("all")) {
-				Thread thread = new Thread(FileHandler.dlFile(sc, args[3], Integer.parseInt(args[4])));
-				thread.setDaemon(true);
-				sc.getDlThreads().add(thread);
-				thread.start();
-			}
-		}*/
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 	
-	public static void parse(String input, ClientConnection client) {
+	public static void parse(String input, ClientConnection client, ClientConnection selfClient) {
 
 		String[] args = input.split(" ");
 		String command = args[0];
@@ -165,7 +258,8 @@ public class CommandParser {
 		} else if (command.equalsIgnoreCase("*!link:")) {
 			if (client.getClientName().equalsIgnoreCase(args[1]) || args[1].equals("all")) {
 				try {
-					client.getSendingData().writeUTF(input);
+					//client.getSendingData().writeUTF(input);
+					client.getSendingData().writeUTF("/linkopen" + input.substring(input.indexOf(" ")));
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -173,7 +267,7 @@ public class CommandParser {
 		} else if (command.equalsIgnoreCase("*!users:")) {
 			if (client.getClientName().equalsIgnoreCase(args[1])) {
 				try {
-					client.getSendingData().writeUTF("Connected users: " + client.getServer().getUsers().stream().map(e -> e.getClientName()).collect(Collectors.toList()).toString());
+					client.getSendingData().writeUTF("Connected users: " + client.getServer().getUsers().stream().map(e -> e.getCC().getClientName()).collect(Collectors.toList()).toString());
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -191,6 +285,7 @@ public class CommandParser {
 				try {
 					System.out.println("Received a *!sendfile, sending a /getfile");
 					client.getSendingData().writeUTF("/getfile" + input.substring(input.indexOf(" ")));
+					selfClient.sendFile(input);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -203,11 +298,28 @@ public class CommandParser {
 					e.printStackTrace();
 				}
 			}
-		} else if (command.equalsIgnoreCase("*!img:")) {
-			if (args[2].equalsIgnoreCase("all") || client.getClientName().equalsIgnoreCase(args[2])) {
+		} else if (command.equalsIgnoreCase("*!sendimg:")) {
+			if (client.getClientName().equalsIgnoreCase(args[2]) || args[2].equals("all")) {
 				try {
+					System.out.println("Received a *!sendimg, sending a /getimg");
 					client.getSendingData().writeUTF("/getimg" + input.substring(input.indexOf(" ")));
-					client.getSendingData().writeUTF("New image from " + args[1] + ".");
+					selfClient.sendImg(input);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		} else if (command.equalsIgnoreCase("*!declineimg:")) {
+			if (client.getClientName().equalsIgnoreCase(args[1])) {
+				try {
+					client.getSendingData().writeUTF("/declineimg" + input.substring(input.indexOf(" ")));
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		} else if (command.equalsIgnoreCase("*!youtube")) {
+			if (client.getClientName().equalsIgnoreCase(args[1]) || args[1] .equalsIgnoreCase("all")) {
+				try {
+					client.getSendingData().writeUTF("/youtubeplay" + input.substring(input.indexOf(" ")));
 				} catch (IOException e) {
 					e.printStackTrace();
 				}

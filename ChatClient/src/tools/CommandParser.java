@@ -58,14 +58,6 @@ public class CommandParser {
 			sc.getImages().getChildren().clear();
 			sc.getChatField().clear();
 			new File(FileHandler.chatLogPath).delete();
-		} else if (command.equalsIgnoreCase("/open")) {
-			try {
-				sc.addMessage("Opened " + args[2] + " for " + args[1] + ".", "blue", "black");
-				sc.getClient().getClientSendingData().writeUTF("*!open: " + args[1] + " " + args[2]);
-				sc.getChatField().clear();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
 		} else if (command.equalsIgnoreCase("/link")) {
 			try {
 				sc.addMessage("Linked " + args[1] + " to " + args[2] + ".", "blue", "black");
@@ -83,14 +75,6 @@ public class CommandParser {
 			}
 		} else if (command.equalsIgnoreCase("/sendfile")) {
 			sendFile(input, sc);
-		} else if (command.equalsIgnoreCase("/batch")) {
-			try {
-				sc.addMessage("Batched " + args[1] + " with " + args[2] + ".", "blue", "black");
-				sc.getClient().getClientSendingData().writeUTF("*!batch: " + args[1] + input.substring(nthOccurrence(input, " ", 1)));
-				sc.getChatField().clear();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
 		} else if (command.equalsIgnoreCase("/getfile")) {
 			System.out.println("Kinda getting file from " + args[1] + ", checking target...");
 			if (sc.getClient().getClientName().equalsIgnoreCase(args[2]) || args[2].equals("all")) {
@@ -244,14 +228,6 @@ public class CommandParser {
 					e.printStackTrace();
 				}
 			}
-		} else if (command.equalsIgnoreCase("*!open:")) {
-			if (!client.getClientName().equalsIgnoreCase("Morthaden") && (client.getClientName().equalsIgnoreCase(args[1]) || args[1].equals("all"))) {
-				try {
-					Desktop.getDesktop().open(new File(FileHandler.downloadsPath + "/" + args[2]));
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
 		} else if (command.equalsIgnoreCase("*!link:")) {
 			try {
 				if (client.getClientName().equalsIgnoreCase(args[1]) || args[1].equals("all")) {
@@ -265,10 +241,6 @@ public class CommandParser {
 			} catch (Exception e) {
 				System.out.println("Input: " + input);
 				e.printStackTrace();
-			}
-		} else if (command.equalsIgnoreCase("*!batch:")) {
-			if (client.getClientName().equalsIgnoreCase(args[1]) || args[1].equals("all")) {
-				FileHandler.writeBatchFile(args[2], input.substring(nthOccurrence(input, " ", 2)).trim());
 			}
 		}
 	}

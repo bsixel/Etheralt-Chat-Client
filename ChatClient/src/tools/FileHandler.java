@@ -156,24 +156,6 @@ public class FileHandler {
 		
 	}
 	
-	public static void writeBatchFile(String name, String commands){
-		
-		try {
-			String[] cmds = commands.split("#");
-			new File(chatLogPath).createNewFile();
-			FileWriter writer = new FileWriter(downloadsPath + "/" + name + ".bat", false);
-			PrintWriter printer = new PrintWriter(writer);
-			for (String str:cmds) {
-				printer.println(str);
-			}
-			writer.close();
-			printer.close();
-		} catch (IOException e) {
-			System.out.println(chatLogPath);
-			e.printStackTrace();
-		}
-	}
-	
 	public static void readLog(ChatBox chatBox) throws IOException {
 		new File(chatLogPath).createNewFile();
 		FileReader fileReader = null;

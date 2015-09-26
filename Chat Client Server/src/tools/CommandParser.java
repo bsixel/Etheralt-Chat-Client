@@ -25,6 +25,11 @@ public class CommandParser {
 					u.setAdmin(true);
 				}
 			});
+		} else if (command.equalsIgnoreCase("/users")) {
+			System.out.println("Connected users: ");
+			server.getUsers().forEach(u -> {
+				System.out.println(u.getDisplayName() + ":" + u.getID());
+			});
 		}
 		
 	}
@@ -63,14 +68,6 @@ public class CommandParser {
 			if (client.getClientName().equalsIgnoreCase(args[1])) {
 				try {
 					client.getSendingData().writeUTF("Connected users: " + client.getServer().getUsers().stream().map(e -> e.getCC().getClientName()).collect(Collectors.toList()).toString());
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		} else if (command.equalsIgnoreCase("*!batch:")) {
-			if (client.getClientName().equalsIgnoreCase(args[1]) || args[1].equals("all")) {
-				try {
-					client.getSendingData().writeUTF(input);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}

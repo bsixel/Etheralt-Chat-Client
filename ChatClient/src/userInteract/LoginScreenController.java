@@ -186,9 +186,7 @@ public class LoginScreenController {
 			Thread clientThread = new Thread(startClient);
 			clientThread.setDaemon(true);
 			clientThread.start();
-			System.out.println("Password: " + pass);
 			synchronized (lock) {
-				System.out.println("Stuff is getting here. Probably not past.");
 				try {
 					lock.wait();
 				} catch (InterruptedException e) {

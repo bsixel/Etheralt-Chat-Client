@@ -71,13 +71,11 @@ public class Client {
 				this.textOutData.writeUTF("*!givename: " + editedName.trim() + " " + FileHandler.getProperty("computer_ID") + " " + password.trim());
 			}
 			String input = this.textInData.readUTF().trim();
-			out.println("Input from server:" + input);
 			if (input.equalsIgnoreCase("*!decline:password") || input.equalsIgnoreCase("*!decline:username")) {
 				ls.setLocked(false);
 				ls.setNameTaken(true);
 			}
 			if (input.equalsIgnoreCase("*!granted")) {
-				out.println("Client got to here: granted.");
 				synchronized (lock) {
 					lock.notifyAll();
 				}
@@ -91,7 +89,6 @@ public class Client {
 			}
 		}
 		ls.setLocked(false);
-		out.println("Client got to here: granted again for testing.");
 		
 		/*synchronized (lock) {
 			ls.toggleLock();
@@ -141,7 +138,7 @@ public class Client {
 			previous = input;
 		}
 		} catch (java.io.EOFException e) {
-			System.err.println("Error on clientside attempt to get data: whileRunning loop issue.");
+			System.err.println("You probably just closed the chat client window. Eventually I'll figure out how to make it gracefully shut down.");
 		}
 	}
 

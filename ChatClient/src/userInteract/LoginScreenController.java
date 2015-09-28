@@ -188,7 +188,13 @@ public class LoginScreenController {
 			clientThread.start();
 			synchronized (lock) {
 				try {
-					lock.wait();
+					while (locked) {
+						lock.wait(3000);
+						if (locked) {
+							Popups.startInfoDlg("Connection error!", "Unable to connect to server:" + System.lineSeparator() + "Connection timed out.");
+							return;
+						}
+					}
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 					FileHandler.writeToErrorLog(e.getStackTrace()[0].toString());

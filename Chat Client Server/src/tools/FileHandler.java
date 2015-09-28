@@ -20,7 +20,7 @@ import server.Server;
 
 public class FileHandler {
 	
-	public static final String chatLogPath = System.getProperty("user.home") + "/Documents/Etheralt Chat Client/chat_log.log";
+	public static final String chatLogPath = System.getProperty("user.home") + "/Documents/Etheralt Chat Client/server_chat_log.log";
 	public static final String errorLogPath = System.getProperty("user.home") + "/Documents/Etheralt Chat Client/error_log.log";
 	public static final String downloadsPath = System.getProperty("user.home") + "/Documents/Etheralt Chat Client/Downloads";
 	public static final String picturesPath = System.getProperty("user.home") + "/Documents/Etheralt Chat Client/Pictures";

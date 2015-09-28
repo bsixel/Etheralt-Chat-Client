@@ -1,6 +1,7 @@
 package server;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.net.ServerSocket;
 import java.util.ArrayList;
 
@@ -25,15 +26,17 @@ public class Server implements Runnable {
 	//Strings
     String initStr = "Connected users:";
     String str;
-    private String password = "";
+    private String password = "default";
 	
 	//Objects
 	private ServerSocket server;
 	private ServerSocket DLServer;
 	private ServerSocket VoiceServer;
 	private ServerSocket picServer;
+	private PrintStream out;
 	
-	public void startServer(int port, boolean standalone, String password) throws IOException {
+	public void startServer(int port, boolean standalone, String password, PrintStream out) throws IOException {
+		this.out = out;
 		
 		this.users.addListener(new ListChangeListener<User>() {
 			 
@@ -52,7 +55,7 @@ public class Server implements Runnable {
                 	try {
                 		change.next();
                 		u.getCC().getSendingData().writeUTF("[System] " + SystemInfo.getDate() + ": " + ((User) change.getAddedSubList().get(0)).getCC().getClientName() + " has connected.");
-                		System.out.println("[System] " + SystemInfo.getDate() + ": " + ((User) change.getAddedSubList().get(0)).getCC().getClientName() + " has connected.");
+                		out.println("[System] " + SystemInfo.getDate() + ": " + ((User) change.getAddedSubList().get(0)).getCC().getClientName() + " has connected.");
 						u.getCC().getSendingData().writeUTF("/updateusers " + str);
 					} catch (Exception e) {
 						e.printStackTrace();
@@ -66,13 +69,12 @@ public class Server implements Runnable {
 			this.DLServer = new ServerSocket(port + 1);
 			this.VoiceServer = new ServerSocket(port + 2);
 			this.picServer = new ServerSocket(port + 3);
-			
+			out.println("Server started successfully.");
 			while (true) {
 				ClientConnection client = new ClientConnection(server.accept(), DLServer.accept(), VoiceServer.accept(), picServer.accept(), clientID++, this);
-				
 				Thread clientThread = new Thread(() -> {
-					client.startConnection();
-					Thread.currentThread().interrupt();
+					System.out.println("Adding new client!");
+					client.startConnection(out);
 				});
 				clientThread.setDaemon(true);
 				clientThread.start();
@@ -132,6 +134,14 @@ public class Server implements Runnable {
 
 	public void setClientID(int clientID) {
 		this.clientID = clientID;
+	}
+	
+	public void addClientID() {
+		this.clientID ++;
+	}
+	
+	public void subClientID() {
+		this.clientID --;
 	}
 
 	public boolean isStandalone() {

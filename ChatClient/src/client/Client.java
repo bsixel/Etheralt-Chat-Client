@@ -4,10 +4,12 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintStream;
 import java.net.InetAddress;
 import java.net.Socket;
 
 import javafx.application.Platform;
+import javafx.scene.control.PasswordField;
 import sun.audio.AudioData;
 import sun.audio.AudioPlayer;
 import sun.audio.AudioStream;
@@ -36,13 +38,15 @@ public class Client {
 	private DataOutputStream picOutData;
 	private LoginScreenController ls;
 	private AudioData ad;
-	private byte[] voiceInput = new byte[10000];
+	private byte[] voiceInput = new byte[8192];
+	private PrintStream out;
 	
 	//Strings
 	private String clientname;
 
 	
-	public void startClient(String IP, int port, LoginScreenController ls, Object lock, String password) throws IOException {
+	public void startClient(String IP, int port, LoginScreenController ls, String password, PrintStream out, Object lock) throws IOException {
+		this.out = out;
 		
 		this.textSocket = new Socket(InetAddress.getByName(IP), port);
 		this.textInData = new DataInputStream(this.textSocket.getInputStream());
@@ -56,17 +60,28 @@ public class Client {
 		this.picSocket = new Socket(InetAddress.getByName(IP), port + 3);
 		this.picInData = new DataInputStream(this.picSocket.getInputStream());
 		this.picOutData = new DataOutputStream(this.picSocket.getOutputStream());
-
-		this.ls = ls;
+		
 		String editedName = ls.getUsernameField().getText();
 		int n = 1;
 		while (true) {
 			
-			this.textOutData.writeUTF("*!givename: " + editedName.trim() + " " + FileHandler.getProperty("computer_ID") + " " + password);
-			
+			if (password.equalsIgnoreCase("")) {
+				this.textOutData.writeUTF("*!givename: " + editedName.trim() + " " + FileHandler.getProperty("computer_ID") + " default");
+			} else {
+				this.textOutData.writeUTF("*!givename: " + editedName.trim() + " " + FileHandler.getProperty("computer_ID") + " " + password.trim());
+			}
 			String input = this.textInData.readUTF().trim();
-			
-			if (input.equals("*!granted")) {
+			out.println("Input from server:" + input);
+			if (input.equalsIgnoreCase("*!decline:password") || input.equalsIgnoreCase("*!decline:username")) {
+				ls.setLocked(false);
+				ls.setNameTaken(true);
+			}
+			if (input.equalsIgnoreCase("*!granted")) {
+				out.println("Client got to here: granted.");
+				synchronized (lock) {
+					lock.notifyAll();
+				}
+				ls.setLocked(false);
 				this.setClientname(editedName);
 				ls.setUsername(editedName);
 				break;
@@ -75,14 +90,15 @@ public class Client {
 				n++;
 			}
 		}
+		ls.setLocked(false);
+		out.println("Client got to here: granted again for testing.");
 		
-		synchronized (lock) {
+		/*synchronized (lock) {
 			ls.toggleLock();
-			lock.notifyAll();
 			Platform.runLater(() -> {
 				System.out.println("Unlocked from client.");
 			});
-		}
+		}*/
 		
 		Thread audioThread = new Thread(() -> {
 			try {

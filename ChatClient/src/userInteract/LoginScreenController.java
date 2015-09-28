@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import application.WindowController;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -21,32 +22,31 @@ import javafx.stage.Stage;
 import tools.FileHandler;
 import tools.SystemInfo;
 
-
-
 public class LoginScreenController {
-	
-	//Lists
+
+	// Lists
 	private List<Button> buttons = new ArrayList<Button>();
-	
-	//Buttons
+
+	// Buttons
 	private Button loginButton;
-	
-	//Numbers
-	
-	//Booleans
-	boolean locked = true;
-	private boolean stop= false;
-	
-	//Strings
+
+	// Numbers
+
+	// Booleans
+	private boolean locked = true;
+	private boolean stopped = false;
+	private boolean nameTaken = false;
+
+	// Strings
 	private String loginString = "Please enter your display name.";
 	private String username;
-	
-	//Scene
+
+	// Scene
 	private Stage window;
 	private Scene chatScreen;
 	private VBox layout = new VBox(15);
-	
-	//Objects
+
+	// Objects
 	private Label usernameLabel;
 	private TextField usernameField;
 	private WindowController windowController;
@@ -55,37 +55,42 @@ public class LoginScreenController {
 	private TextField IPField;
 	private Label IPLabel;
 	private TextField portField;
-	
+
 	private void initUsernameLabel() {
-		
+
 		this.usernameLabel = new Label(loginString);
 		this.usernameLabel.setPrefSize(175, 15);
 		this.usernameLabel.setTextAlignment(TextAlignment.CENTER);
 		this.layout.getChildren().addAll(usernameLabel, getUsernameField());
-		
+
 	}
-	
+
 	private void initIPField() {
 
 		this.IPLabel = new Label("Please enter a host IP address and port: ");
-		
+
 		this.setIPField(new TextField());
-		
+
 		String prevIP = FileHandler.getProperty("last_IP");
 		if (prevIP == null) {
 			FileHandler.setProperty("last_IP", "");
 		} else if (prevIP != null) {
 			this.getIPField().setText(prevIP);
 		}
-		
+
 		this.getIPField().setMaxSize(175, 10);
 		this.getIPField().setPrefSize(175, 10);
-		
+
 		this.getIPField().addEventHandler(KeyEvent.KEY_PRESSED, key -> {
 			if (key.getCode() == KeyCode.ENTER) {
-				if ((getIPField().getText().contains(" ") || getIPField().getText().equals("") || getIPField().getText().equals(null)) && (getIPField().getText().contains(" ") || getIPField().getText().equals("") || getIPField().getText().equals(null))) {
+				if ((getIPField().getText().contains(" ") || getIPField().getText().equals("")
+						|| getIPField().getText().equals(null))
+						&& (getIPField().getText().contains(" ") || getIPField().getText().equals("")
+								|| getIPField().getText().equals(null))) {
 					Popups.startInfoDlg("Invalid IP", "Please enter a valid host.");
-				} else if (!(getIPField().getText().contains(" ") || getIPField().getText().equals("")) && (getIPField().getText().contains(" ") || getIPField().getText().equals("") || getIPField().getText().equals(null))) {
+				} else if (!(getIPField().getText().contains(" ") || getIPField().getText().equals(""))
+						&& (getIPField().getText().contains(" ") || getIPField().getText().equals("")
+								|| getIPField().getText().equals(null))) {
 					try {
 						login(false);
 					} catch (Exception e) {
@@ -95,36 +100,36 @@ public class LoginScreenController {
 				}
 			}
 		});
-		
+
 		this.setPortField(new TextField());
-		
+
 		String prevPort = FileHandler.getProperty("last_port");
 		if (prevPort == null) {
 			FileHandler.setProperty("last_port", "");
 		} else if (prevPort != null) {
 			this.getPortField().setText(prevPort);
 		}
-		
+
 		this.getPortField().setMaxSize(50, 10);
 		this.getPortField().setPrefSize(50, 10);
-		
+
 		this.IPLayout.getChildren().addAll(this.getIPField(), this.getPortField());
 		this.layout.getChildren().addAll(this.IPLabel, this.IPLayout);
 		this.IPLayout.setAlignment(Pos.CENTER);
 
 	}
-	
+
 	private void initUserField() {
-		
+
 		this.setUsernameField(new TextField());
-		
+
 		String prevUsername = FileHandler.getProperty("last_username");
 		if (prevUsername == null) {
 			FileHandler.setProperty("last_username", "");
 		} else if (prevUsername != null) {
 			this.getUsernameField().setText(prevUsername);
 		}
-		
+
 		this.getUsernameField().setMaxSize(215, 15);
 		this.getUsernameField().setPrefSize(215, 15);
 		this.getUsernameField().addEventHandler(KeyEvent.KEY_PRESSED, key -> {
@@ -141,19 +146,20 @@ public class LoginScreenController {
 				}
 			}
 		});
-		
+
 	}
-	
-	public LoginScreenController(MainScreenController mainController, VBox mainScreenLayout, Stage window, Scene nextScene, WindowController windowController) {
-		
+
+	public LoginScreenController(MainScreenController mainController, VBox mainScreenLayout, Stage window,
+			Scene nextScene, WindowController windowController) {
+
 		this.setMainController(mainController);
 		this.windowController = windowController;
 		this.layout = mainScreenLayout;
 		this.window = window;
 		this.chatScreen = nextScene;
-		
+
 	}
-	
+
 	private void login(boolean b) throws NumberFormatException, IOException {
 		if (getUsernameField().getText().contains(" ") || getUsernameField().getText().equals("")) {
 			Popups.startInfoDlg("", "Please enter a name with no spaces.");
@@ -164,59 +170,63 @@ public class LoginScreenController {
 			Label userLabel = this.getMainController().getUsernameLabel();
 			String str = " Logged in as " + this.username + " ";
 			userLabel.setText(str);
-			Object lock = new Object();
 			String pass = Popups.startAnsDlg("Enter server password:");
-				Runnable startClient = () -> {
-					synchronized (lock) {
-						try {
-							getMainController().getClient().startClient(this.getIPField().getText(), Integer.parseInt(this.getPortField().getText()), this, lock, pass);
-						} catch (Exception e) {
-							System.err.println("Line 241 ish: Unable to start client; incorrect password or invalid server.");
-							setStop(true);
-							lock.notifyAll();
-						}
-					}
-				};
-				
-				Thread clientThread = new Thread(startClient);
-				clientThread.setDaemon(true);
-				clientThread.start();
-			synchronized (lock) {
+			Object lock = new Object();
+			Runnable startClient = () -> {
 				try {
-					System.out.println(locked);
-					while (locked) {
-						lock.wait();
-					}
-					if (isStopped()) {
-						Popups.startInfoDlg("Connection error!", "Unable to connect to server: " + System.lineSeparator() + "Connection refused or incorrect password.");
-						return;
-					}
+					getMainController().getClient().startClient(this.getIPField().getText(), Integer.parseInt(this.getPortField().getText()), this, pass, System.out, lock);
+				} catch (Exception e) {
+					Platform.runLater(() -> {System.err.println("Line " + e.getStackTrace()[0].getLineNumber() + ": Unable to start client; incorrect password or invalid server.");});
+					FileHandler.writeToErrorLog("Line " + e.getStackTrace()[0].getLineNumber() + ": Unable to start client; incorrect password or invalid server.");
+					setLocked(false);
+					setStop(true);
+				}
+			};
+
+			Thread clientThread = new Thread(startClient);
+			clientThread.setDaemon(true);
+			clientThread.start();
+			System.out.println("Password: " + pass);
+			synchronized (lock) {
+				System.out.println("Stuff is getting here. Probably not past.");
+				try {
+					lock.wait();
 				} catch (InterruptedException e) {
 					e.printStackTrace();
+					FileHandler.writeToErrorLog(e.getStackTrace()[0].toString());
 				}
-				this.mainController.scrollToBottom();
-				FileHandler.saveProperties(this);
-				this.window.setScene(chatScreen);
-				window.setUserData(username);
-				window.setWidth(1075);
-				window.setHeight(750);
-				this.window.setMinWidth(1075);
-				this.window.setMinHeight(750);
-				window.setX((WindowController.getScreenWidth() / 2) - window.getWidth() / 2);
-				window.setY((WindowController.getScreenHeight() / 2) - window.getHeight() / 2);
-				window.setResizable(true);
-				this.IPLabel.setText("Please enter a host IP address and port: ");
 			}
-			
+			if (this.nameTaken) {
+				Popups.startInfoDlg("Connection error!", "Unable to connect to server:" + System.lineSeparator() + "Incorrect password/Username taken.");
+				return;
+			}
+			if (isStopped()) {
+				Popups.startInfoDlg("Connection error!", "Unable to connect to server: " + System.lineSeparator() + "Connection refused or incorrect password.");
+				return;
+			}
+			this.mainController.scrollToBottom();
+			FileHandler.saveProperties(this);
+			this.window.setScene(chatScreen);
+			window.setUserData(username);
+			window.setWidth(1075);
+			window.setHeight(750);
+			this.window.setMinWidth(1075);
+			this.window.setMinHeight(750);
+			window.setX((WindowController.getScreenWidth() / 2) - window.getWidth() / 2);
+			window.setY((WindowController.getScreenHeight() / 2) - window.getHeight() / 2);
+			window.setResizable(true);
+			this.IPLabel.setText("Please enter a host IP address and port: ");
+
 		}
 	}
-	
+
 	private void initLoginButton() {
-		
+
 		this.loginButton = new Button();
 		this.loginButton.setText("Log in");
 		this.loginButton.addEventHandler(ActionEvent.ACTION, e -> {
-			if (getIPField().getText().contains(" ") || getIPField().getText().equals("") || getIPField().getText().equals(null)) {
+			if (getIPField().getText().contains(" ") || getIPField().getText().equals("")
+					|| getIPField().getText().equals(null)) {
 				Popups.startInfoDlg("Invalid IP", "Please enter a valid host IP address.");
 			} else if (!(getIPField().getText().contains(" ") || getIPField().getText().equals(""))) {
 				try {
@@ -227,11 +237,11 @@ public class LoginScreenController {
 				}
 			}
 		});
-		
+
 	}
-	
+
 	public void initLoginScreen() {
-		
+
 		initUserField();
 		initLoginButton();
 		initUsernameLabel();
@@ -245,8 +255,10 @@ public class LoginScreenController {
 			e.consume();
 			if (Popups.startConfDlg("Are you sure you want to exit?")) {
 				try {
-					this.mainController.getClient().getClientSendingData().writeUTF("*![System] " + SystemInfo.getDate() + ": " + this.mainController.getClient().getClientName() + " has disconnected.");
-					FileHandler.writeToChatLog("[System] " + SystemInfo.getDate() + ": " + this.mainController.getClient().getClientName() + " has disconnected.");
+					this.mainController.getClient().getClientSendingData().writeUTF("*![System] " + SystemInfo.getDate()
+							+ ": " + this.mainController.getClient().getClientName() + " has disconnected.");
+					FileHandler.writeToChatLog("[System] " + SystemInfo.getDate() + ": "
+							+ this.mainController.getClient().getClientName() + " has disconnected.");
 					this.mainController.getClient().setRunning(false);
 				} catch (Exception e1) {
 					System.err.println("You probably tried closing the window without logging in. That throws errors.");
@@ -255,9 +267,9 @@ public class LoginScreenController {
 				System.exit(0);
 			}
 		});
-		
+
 	}
-	
+
 	public List<Button> getButtons() {
 		return this.buttons;
 	}
@@ -265,7 +277,7 @@ public class LoginScreenController {
 	public VBox getLayout() {
 		return this.layout;
 	}
-	
+
 	public String getUsername() {
 		return this.username;
 	}
@@ -301,21 +313,37 @@ public class LoginScreenController {
 	public void setMainController(MainScreenController mainController) {
 		this.mainController = mainController;
 	}
-	
+
 	public void setUsername(String name) {
 		this.username = name;
 	}
-	
+
 	public void toggleLock() {
 		this.locked = !this.locked;
 	}
 
 	public boolean isStopped() {
-		return stop;
+		return stopped;
 	}
 
 	public void setStop(boolean stop) {
-		this.stop = stop;
+		this.stopped = stop;
 	}
 	
+	public void setLocked(boolean locked) {
+		this.locked= locked;
+	}
+	
+	public boolean getLocked() {
+		return this.locked;
+	}
+	
+	public void setNameTaken(boolean taken) {
+		this.nameTaken = taken;
+	}
+	
+	public boolean getNameTaken() {
+		return this.nameTaken;
+	}
+
 }

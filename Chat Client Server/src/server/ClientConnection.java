@@ -3,6 +3,7 @@ package server;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.net.Socket;
 import java.util.Iterator;
 
@@ -46,6 +47,9 @@ public class ClientConnection {
 	//Strings
 	private String clientName;
 
+	//Objects
+	private PrintStream out;
+
 	public ClientConnection(Socket socket, Socket DLSocket, Socket voiceSocket, Socket picSocket, int clientID, Server server) {
 		this.textSocket = socket;
 		this.voiceSocket = voiceSocket;
@@ -55,7 +59,8 @@ public class ClientConnection {
 		this.setServer(server);
 	}
 
-	public void startConnection() {
+	public void startConnection(PrintStream out) {
+		this.out = out;
 
 		try {
 			this.acceptedData = new DataInputStream(this.textSocket.getInputStream());
@@ -73,13 +78,19 @@ public class ClientConnection {
 				String[] args = input.split(" ");
 				if (input.startsWith("*!givename:")) {
 					this.setClientName(args[1]);
-
+					System.out.println("Assigning name '" + args[1] + "'");
 					synchronized (this.getServer().getUsers()) {
 						if (this.getClientName() == null || this.getClientName() == "") {
 							continue;
 						}
-
-						if (!this.getServer().getUsers().stream().anyMatch(e -> e.equals(this.getClientName())) && args[2] == this.getServer().getPassword()) {
+						if (!args[3].equals(this.getServer().getPassword())) {
+							this.getSendingData().writeUTF("*!decline:password");
+							return;
+						} else if (!args[3].equals(this.getServer().getPassword())) {
+							this.getSendingData().writeUTF("*!decline:username");
+							return;
+						}
+						if (!this.getServer().getUsers().stream().anyMatch(e -> e.equals(this.getClientName())) && args[3].equals(this.getServer().getPassword())) {
 							this.getSendingData().writeUTF("*!granted");
 							this.getServer().getUsers().add(new User(this.getClientName(), args[2], this));
 							break;
@@ -194,6 +205,11 @@ public class ClientConnection {
 			getServer().getUsers().remove(this);
 			try {
 				this.textSocket.close();
+				this.DLSocket.close();
+				this.picSocket.close();
+				this.voiceSocket.close();
+				getServer().subClientID();
+				Thread.currentThread().interrupt();
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}

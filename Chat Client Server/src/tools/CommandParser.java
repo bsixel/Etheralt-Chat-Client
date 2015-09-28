@@ -30,6 +30,11 @@ public class CommandParser {
 			server.getUsers().forEach(u -> {
 				System.out.println(u.getDisplayName() + ":" + u.getID());
 			});
+		} else if (command.equalsIgnoreCase("/password")) {
+			System.out.println("Password: '" + server.getPassword() + "'");
+		} else if (command.equals("/stop")) {
+			System.out.println("Shutting down server.");
+			System.exit(0);
 		}
 		
 	}

@@ -36,6 +36,7 @@ public class Server implements Runnable {
 	private PrintStream out;
 	
 	public void startServer(int port, boolean standalone, String password, PrintStream out) throws IOException {
+		this.password = password;
 		this.out = out;
 		
 		this.users.addListener(new ListChangeListener<User>() {

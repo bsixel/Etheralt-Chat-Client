@@ -85,12 +85,14 @@ public class ClientConnection {
 						}
 						if (!args[3].equals(this.getServer().getPassword())) {
 							this.getSendingData().writeUTF("*!decline:password");
+							out.println("User " + this.clientName + " failed to connect with password: '" + args[3] +"'");
+							out.println("Desired password: " + this.getServer().getPassword());
 							return;
-						} else if (!args[3].equals(this.getServer().getPassword())) {
+						} else if (this.getServer().getUsers().stream().anyMatch(e -> e.getDisplayName().equalsIgnoreCase(this.getClientName()))) {
 							this.getSendingData().writeUTF("*!decline:username");
 							return;
 						}
-						if (!this.getServer().getUsers().stream().anyMatch(e -> e.equals(this.getClientName())) && args[3].equals(this.getServer().getPassword())) {
+						if (!this.getServer().getUsers().stream().anyMatch(e -> e.getDisplayName().equalsIgnoreCase(this.getClientName())) && args[3].equals(this.getServer().getPassword())) {
 							this.getSendingData().writeUTF("*!granted");
 							this.getServer().getUsers().add(new User(this.getClientName(), args[2], this));
 							break;

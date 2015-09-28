@@ -68,14 +68,28 @@ public class Client {
 			if (password.equalsIgnoreCase("")) {
 				this.textOutData.writeUTF("*!givename: " + editedName.trim() + " " + FileHandler.getProperty("computer_ID") + " default");
 			} else {
-				this.textOutData.writeUTF("*!givename: " + editedName.trim() + " " + FileHandler.getProperty("computer_ID") + " " + password.trim());
+				this.textOutData.writeUTF("*!givename: " + editedName.trim() + " " + FileHandler.getProperty("computer_ID") + " " + password);
 			}
 			String input = this.textInData.readUTF().trim();
-			if (input.equalsIgnoreCase("*!decline:password") || input.equalsIgnoreCase("*!decline:username")) {
+			out.println("Input: " + input);
+			if (input.equalsIgnoreCase("*!decline:password")) {
+				out.println("Declined password: " + password);
 				ls.setLocked(false);
 				ls.setNameTaken(true);
+				synchronized (lock) {
+					lock.notifyAll();
+				}
+			}
+			if (input.equalsIgnoreCase("*!decline:username")) {
+				out.println("Declined username.");
+				ls.setLocked(false);
+				ls.setNameTaken(true);
+				synchronized (lock) {
+					lock.notifyAll();
+				}
 			}
 			if (input.equalsIgnoreCase("*!granted")) {
+				out.println("Granted.");
 				synchronized (lock) {
 					lock.notifyAll();
 				}

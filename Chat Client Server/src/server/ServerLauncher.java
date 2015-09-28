@@ -17,9 +17,11 @@ public class ServerLauncher {
 		PrintStream out = System.out;
 		Thread serverThread = new Thread(() -> {
 			try {
+				System.out.println("Starting with password '" + args[1] + "'.");
 				server.startServer(Integer.parseInt(args[0]), true, args[1], out);
 			} catch (Exception e) {
 				try {
+					System.out.println("Starting with default password.");
 					server.startServer(Integer.parseInt(args[0]), true, "default", out);
 				} catch (Exception e1) {
 					e1.printStackTrace();

@@ -47,4 +47,8 @@ public class User {
 		this.admin = b;
 	}
 	
+	public String toString() {
+		return this.displayName;
+	}
+	
 }

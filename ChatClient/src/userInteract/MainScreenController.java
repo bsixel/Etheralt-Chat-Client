@@ -5,9 +5,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 
 import application.ChatClient;
+import application.Launch;
 import application.WindowController;
 import client.Client;
 import javafx.application.Platform;
@@ -295,17 +297,7 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 		this.logoutButton = new Button();
 		this.logoutButton.setText("Log out");
 		this.logoutButton.setOnAction(e -> {
-			try {
-				this.client.getClientSendingData().writeUTF("*![System] " + SystemInfo.getDate() + ": " + this.client.getClientName() + " has disconnected.");
-			} catch (Exception ex) {
-				ex.printStackTrace();
-			}
-			window.close();
-			try {
-				new ChatClient().start(new Stage());
-			} catch (Exception e1) {
-				e1.printStackTrace();
-			}
+			logout();
 		});
 
 	}
@@ -418,6 +410,22 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 
 	public void setImages(VBox images) {
 		this.images = images;
+	}
+	
+	@SuppressWarnings("deprecation")
+	public void logout() {
+		try {
+			this.client.getClientSendingData().writeUTF("*![System] " + SystemInfo.getDate() + ": " + this.client.getClientName() + " has disconnected.");
+			getClient().setRunning(false);
+		} catch (Exception ex) {
+			
+		}
+		try {
+			window.close();
+			new ChatClient().launch(new Stage());
+		} catch (Exception e1) {
+			e1.printStackTrace();
+		}
 	}
 
 }

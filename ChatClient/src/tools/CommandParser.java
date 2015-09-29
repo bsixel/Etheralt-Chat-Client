@@ -203,13 +203,7 @@ public class CommandParser {
 				e.printStackTrace();
 			}
 		} else if (command.equalsIgnoreCase("/kicked")) {
-			sc.getClient().setRunning(false);
-			sc.getWindow().close();
-			try {
-				new ChatClient().start(new Stage());
-			} catch (Exception e1) {
-				e1.printStackTrace();
-			}
+			sc.logout();
 			Popups.startInfoDlg("Kicked from server!", "Kicked from server: " + System.lineSeparator() + input.split("'")[1]);
 		}
 		

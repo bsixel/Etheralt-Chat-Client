@@ -43,7 +43,12 @@ public class CommandParser {
 			System.out.println("Shutting down server.");
 			System.exit(0);
 		} else if (command.equalsIgnoreCase("/kick")) {
-			server.killUser(args[1], input.split("'")[1]);
+			try {
+				server.killUser(args[1], input.split("'")[1]);
+			} catch (Exception e) {
+				e.printStackTrace();
+				System.err.println("Error! Input = " + input);
+			}
 		}
 		
 	}

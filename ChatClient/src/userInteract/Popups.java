@@ -103,7 +103,7 @@ public class Popups {
 		return b;
 	}
 	
-	public static String startAnsDlg(String question) {
+	public static String startPasswdDlg(String question) {
 		Stage popup = new Stage(StageStyle.UNDECORATED);
 		VBox layout = new VBox(5);
 		layout.setAlignment(Pos.CENTER);
@@ -117,13 +117,19 @@ public class Popups {
 			b = true;
 			popup.close();
 		});
-		submitButton.addEventHandler(KeyEvent.KEY_PRESSED, key -> {
-			if (key.getCode() == KeyCode.ENTER) {
+		passField.setOnKeyPressed(e -> {
+			if (e.getCode().equals(KeyCode.ENTER)) {
+				submitButton.fire();
+				popup.close();
+			}
+		});
+		popup.addEventHandler(KeyEvent.KEY_PRESSED, key -> {
+			if (key.getCode().equals(KeyCode.ENTER)) {
 				submitButton.fire();
 			}
 		});
 		popup.addEventHandler(KeyEvent.KEY_PRESSED, key -> {
-			if (key.getCode() == KeyCode.ESCAPE) {
+			if (key.getCode().equals(KeyCode.ESCAPE)) {
 				popup.close();
 			}
 		});
@@ -138,6 +144,49 @@ public class Popups {
 		popup.setAlwaysOnTop(true);
 		popup.showAndWait();
 		return passField.getText();
+	}
+	
+	public static String startAnsDlg(String question) {
+		Stage popup = new Stage(StageStyle.UNDECORATED);
+		VBox layout = new VBox(5);
+		layout.setAlignment(Pos.CENTER);
+		Scene scene = new Scene(layout, popup.getWidth(), popup.getHeight());
+		popup.setScene(scene);
+		scene.setFill(Color.SILVER);
+		popup.setOnCloseRequest(e -> b = false);
+		TextField ansField = new TextField();
+		Button submitButton = new Button("Submit");
+		submitButton.setOnAction(e -> {
+			b = true;
+			popup.close();
+		});
+		ansField.setOnKeyPressed(e -> {
+			if (e.getCode().equals(KeyCode.ENTER)) {
+				submitButton.fire();
+				popup.close();
+			}
+		});
+		popup.addEventHandler(KeyEvent.KEY_PRESSED, key -> {
+			if (key.getCode().equals(KeyCode.ENTER)) {
+				submitButton.fire();
+			}
+		});
+		popup.addEventHandler(KeyEvent.KEY_PRESSED, key -> {
+			if (key.getCode().equals(KeyCode.ESCAPE)) {
+				popup.close();
+			}
+		});
+		popup.initModality(Modality.APPLICATION_MODAL);
+		popup.setResizable(false);
+		popup.setTitle("Confirmation Dialog");
+		popup.setWidth(250);
+		popup.setHeight(115);
+		Label questionLabel = new Label();
+		questionLabel.setText(question);
+		layout.getChildren().addAll(questionLabel, ansField, submitButton);
+		popup.setAlwaysOnTop(true);
+		popup.showAndWait();
+		return ansField.getText();
 	}
 
 	public static File startFileOpener(String title) {

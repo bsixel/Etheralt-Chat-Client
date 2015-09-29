@@ -32,7 +32,7 @@ public class ServerLauncher {
 		serverThread.setDaemon(true);
 		serverThread.start();
 		while (true) {
-			CommandParser.parse(scanner.next(), server);
+			CommandParser.parse(scanner.nextLine(), server);
 		}
 	}
 

@@ -170,14 +170,15 @@ public class LoginScreenController {
 			Label userLabel = this.getMainController().getUsernameLabel();
 			String str = " Logged in as " + this.username + " ";
 			userLabel.setText(str);
-			String pass = Popups.startAnsDlg("Enter server password:");
+			String pass = Popups.startPasswdDlg("Enter server password:");
 			Object lock = new Object();
 			Runnable startClient = () -> {
 				try {
 					getMainController().getClient().startClient(this.getIPField().getText(), Integer.parseInt(this.getPortField().getText()), this, pass, System.out, lock);
 				} catch (Exception e) {
-					Platform.runLater(() -> {System.err.println("Line " + e.getStackTrace()[0].getLineNumber() + ": Unable to start client; incorrect password or invalid server.");});
-					FileHandler.writeToErrorLog("Line " + e.getStackTrace()[0].getLineNumber() + ": Unable to start client; incorrect password or invalid server.");
+					Platform.runLater(() -> {System.err.println("Line " + e.getStackTrace()[0].getLineNumber() + ": Unable to start client; incorrect password or invalid server. Might also have been kicked from server.");});
+					Platform.runLater(() -> {getMainController().logout();});
+					FileHandler.writeToErrorLog("Line " + e.getStackTrace()[0].getLineNumber() + ": Unable to start client; incorrect password or invalid server. Might also have been kicked from server.");
 					setLocked(false);
 					setStop(true);
 				}

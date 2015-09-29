@@ -16,6 +16,7 @@ import sun.audio.AudioStream;
 import tools.CommandParser;
 import tools.FileHandler;
 import userInteract.LoginScreenController;
+import userInteract.Popups;
 
 public class Client {
 	
@@ -153,6 +154,10 @@ public class Client {
 			previous = input;
 		}
 		} catch (java.io.EOFException e) {
+			Platform.runLater(() -> {
+				ls.getMainController().logout();
+				Popups.startInfoDlg("Kicked from server!", "Kicked from server: " + System.lineSeparator() + "Server closed or lost connection.");
+			});
 			System.err.println("You probably just closed the chat client window. Eventually I'll figure out how to make it gracefully shut down.");
 		}
 	}

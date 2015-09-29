@@ -3,13 +3,14 @@ package server;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.ServerSocket;
+import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.Iterator;
 
-import tools.SystemInfo;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-import server.User;
+import tools.SystemInfo;
 
 public class Server implements Runnable {
 	
@@ -103,7 +104,9 @@ public class Server implements Runnable {
 	}
 
 	public ObservableList<User> getUsers() {
-		return users;
+		synchronized (users) {
+			return users;
+		}
 	}
 
 	public void setUsers(ObservableList<User> users) {
@@ -115,19 +118,48 @@ public class Server implements Runnable {
 	}
 	
 	public void killUser(String name, String reason) {
-		getUsers().forEach(u -> {
-			if (u.getDisplayName().equalsIgnoreCase(name)) {
-				getUsers().remove(u);
-				try {
-					u.getCC().getSendingData().writeUTF("/kicked: '" + reason + "'");
-					u.getCC().getDLSocket().close();
-					u.getCC().getSocket().close();
-					u.getCC().getVoiceSocket().close();
-				} catch (Exception e) {
-					e.printStackTrace();
+		Iterator<User> iter = getUsers().iterator();
+		while (iter.hasNext()) {
+			User u;
+			synchronized (u = iter.next()) {
+				if (u.getDisplayName().equalsIgnoreCase(name)) {
+					out.println("Killed user " + u.getDisplayName());
+					try {
+						u.getCC().getSendingData().writeUTF("/kicked: '" + reason + "'");
+						u.getCC().getDLSocket().close();
+						u.getCC().getSocket().close();
+						u.getCC().getVoiceSocket().close();
+					} catch (SocketException e) {
+						
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
 				}
 			}
-		});
+		}
+		getUsers().removeIf(u -> u.getDisplayName().equalsIgnoreCase(name));
+	}
+	
+	public void killUserAuto(String name, String reason) {
+		Iterator<User> iter = getUsers().iterator();
+		while (iter.hasNext()) {
+			User u;
+			synchronized (u = iter.next()) {
+				if (u.getDisplayName().equalsIgnoreCase(name)) {
+					out.println("Killed user " + u.getDisplayName());
+					try {
+						u.getCC().getSendingData().writeUTF("/kicked: '" + reason + "'");
+						u.getCC().getDLSocket().close();
+						u.getCC().getSocket().close();
+						u.getCC().getVoiceSocket().close();
+					} catch (SocketException e) {
+						
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
 	}
 
 	public int getClientID() {

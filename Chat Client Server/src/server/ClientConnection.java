@@ -131,7 +131,7 @@ public class ClientConnection {
 						this.voiceSendingData.write(buffer, 0, count);
 					} catch (Exception e1) {
 						if (!this.running) {
-							e1.printStackTrace();
+							System.err.println("Lost connection to client!");
 						}
 						break;
 					}
@@ -199,7 +199,7 @@ public class ClientConnection {
 
 			}
 		} catch (SocketException e) {
-			getServer().killUser(getClientName(), "User disconnected.");
+			getServer().killUserAuto(getClientName(), "User disconnected.");
 		} catch (IOException e1) {
 			e1.printStackTrace();
 			FileHandler.writeToErrorLog(e1.getMessage());

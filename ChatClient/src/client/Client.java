@@ -22,6 +22,7 @@ public class Client {
 	//booleans
 	private boolean running = true;
 	private boolean milTime = true;
+	private boolean admin;
 	
 	//Objects
 	private Socket textSocket;
@@ -310,6 +311,10 @@ public class Client {
 	
 	public boolean getMilTime() {
 		return this.milTime;
+	}
+
+	public boolean isAdmin() {
+		return this.admin;
 	}
 	
 }

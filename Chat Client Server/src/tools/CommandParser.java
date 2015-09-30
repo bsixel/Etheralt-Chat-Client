@@ -22,7 +22,14 @@ public class CommandParser {
 		if (command.equalsIgnoreCase("/addAdmin")) {
 			server.getUsers().forEach(u -> {
 				if (u.getDisplayName().equalsIgnoreCase(args[1])) {
-					u.setAdmin(true);
+					try {
+						u.getCC().getSendingData().writeUTF("*!admind");
+						System.out.println("Added " + args[1] + " as admin!");
+						u.setAdmin(true);
+					} catch (Exception e) {
+						System.out.println("Failed to add " + args[1] + " as admin!");
+						FileHandler.writeToErrorLog(e.getStackTrace()[0].toString());
+					}
 				}
 			});
 		} else if (command.equalsIgnoreCase("/users")) {
@@ -32,9 +39,11 @@ public class CommandParser {
 			});
 		} else if (command.equalsIgnoreCase("/password")) {
 			System.out.println("Password: '" + server.getPassword() + "'");
-		} else if (command.equals("/stop")) {
+		} else if (command.equalsIgnoreCase("/stop")) {
 			System.out.println("Shutting down server.");
 			System.exit(0);
+		} else if (command.equalsIgnoreCase("/kick")) {
+			server.killUser(args[1], input.split("'")[1]);
 		}
 		
 	}
@@ -121,6 +130,8 @@ public class CommandParser {
 					e.printStackTrace();
 				}
 			}
+		} else if (command.equalsIgnoreCase("*!kick")) {
+			client.getServer().killUser(args[1], input.split("'")[1]);
 		}
 	}
 	

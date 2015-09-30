@@ -282,6 +282,7 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 					this.chatField.setText(prevInput.get(i));
 				} catch (Exception e) {
 					e.printStackTrace();
+					FileHandler.writeToErrorLog(e.getMessage());
 					System.out.println("Problem scrolling through previous input.");
 				}
 			}

@@ -114,11 +114,12 @@ public class Server implements Runnable {
 		this.users.add(user);
 	}
 	
-	public void killUser(String name) {
+	public void killUser(String name, String reason) {
 		getUsers().forEach(u -> {
 			if (u.getDisplayName().equalsIgnoreCase(name)) {
 				getUsers().remove(u);
 				try {
+					u.getCC().getSendingData().writeUTF("/kicked: '" + reason + "'");
 					u.getCC().getDLSocket().close();
 					u.getCC().getSocket().close();
 					u.getCC().getVoiceSocket().close();

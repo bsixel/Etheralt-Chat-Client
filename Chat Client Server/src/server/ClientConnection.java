@@ -5,9 +5,11 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.Iterator;
 
 import tools.CommandParser;
+import tools.FileHandler;
 import tools.SystemInfo;
 
 /**
@@ -196,14 +198,12 @@ public class ClientConnection {
 				});
 
 			}
-		} catch (IOException e) {
-			e.printStackTrace();
+		} catch (SocketException e) {
+			getServer().killUser(getClientName(), "User disconnected.");
+		} catch (IOException e1) {
+			e1.printStackTrace();
+			FileHandler.writeToErrorLog(e1.getMessage());
 		} finally {
-			try {
-				//getSendingData().writeUTF("*![System] " + SystemInfo.getDate() + ": " + this.clientName + " has disconnected.");
-			} catch (Exception ex) {
-				ex.printStackTrace();
-			}
 			getServer().getUsers().remove(this);
 			try {
 				this.textSocket.close();

@@ -7,10 +7,12 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 
+import application.ChatClient;
 import client.Client;
 import javafx.application.Platform;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
+import javafx.stage.Stage;
 import userInteract.ChatText;
 import userInteract.MainScreenController;
 import userInteract.Popups;
@@ -194,6 +196,21 @@ public class CommandParser {
 			
 		} else if (command.equalsIgnoreCase("/updateusers")) {
 			sc.getUsersArea().setText(input.substring("/updateusers ".length()));
+		} else if (command.equalsIgnoreCase("/kick") && sc.getClient().isAdmin()) {
+			try {
+				sc.getClient().getClientSendingData().writeUTF("*!kick " + args[1] + " " + input.split("'")[1]);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		} else if (command.equalsIgnoreCase("/kicked")) {
+			sc.getClient().setRunning(false);
+			sc.getWindow().close();
+			try {
+				new ChatClient().start(new Stage());
+			} catch (Exception e1) {
+				e1.printStackTrace();
+			}
+			Popups.startInfoDlg("Kicked from server!", "Kicked from server: " + System.lineSeparator() + input.split("'")[1]);
 		}
 		
 	}

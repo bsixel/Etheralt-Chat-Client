@@ -199,7 +199,7 @@ public class ClientConnection {
 
 			}
 		} catch (SocketException e) {
-			getServer().killUserAuto(getClientName(), "User disconnected.");
+			getServer().killUser(getClientName(), "User disconnected.");
 			str = initStr;
             getServer().getUsers().forEach(u -> {
             	if (str.split(" ").length < 3) {

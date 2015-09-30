@@ -149,8 +149,7 @@ public class LoginScreenController {
 
 	}
 
-	public LoginScreenController(MainScreenController mainController, VBox mainScreenLayout, Stage window,
-			Scene nextScene, WindowController windowController) {
+	public LoginScreenController(MainScreenController mainController, VBox mainScreenLayout, Stage window, Scene nextScene, WindowController windowController) {
 
 		this.setMainController(mainController);
 		this.windowController = windowController;
@@ -265,7 +264,9 @@ public class LoginScreenController {
 							+ this.mainController.getClient().getClientName() + " has disconnected.");
 					this.mainController.getClient().setRunning(false);
 				} catch (Exception e1) {
-					System.err.println("You probably tried closing the window without logging in. That throws errors.");
+					if (window.getScene().equals(chatScreen)) {
+						System.err.println("You probably tried closing the window without logging in. That throws errors.");
+					}
 				}
 				window.close();
 				System.exit(0);

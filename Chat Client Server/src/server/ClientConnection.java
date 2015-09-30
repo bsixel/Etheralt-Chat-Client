@@ -48,6 +48,8 @@ public class ClientConnection {
 
 	//Strings
 	private String clientName;
+    String initStr = "Connected users:";
+    String str;
 
 	//Objects
 	private PrintStream out;
@@ -103,24 +105,22 @@ public class ClientConnection {
 				}
 			}
 
-			/*this.getServer().getUsers().forEach(e -> {
-				try {
-					e.getCC().getSendingData().writeUTF("[System] " + SystemInfo.getDate() + ": " + this.getClientName() + " has connected.");
-					System.out.println("*![System] " + SystemInfo.getDate() + ": " + this.getClientName() + " has connected.");
-					String users = "Connected users: ";
-					for (int i = 0; i < this.getServer().getUsers().size(); i++) {
-						if (i == 0) {
-							users = users + this.getServer().getUsers().get(i).getCC().clientName;
-						} else if (!users.contains(this.getServer().getUsers().get(i).getCC().clientName)) {
-							users = users + ", " + this.getServer().getUsers().get(i).getCC().clientName;
-						}
-					}
-
-					e.getCC().getSendingData().writeUTF("/adduser: " + users);
-				} catch (Exception e1) {
-					e1.printStackTrace();
+			str = initStr;
+	        getServer().getUsers().forEach(u -> {
+	        	if (str.split(" ").length < 3) {
+	        		str = str + " " + u.getDisplayName();
+	        	} else {
+	        		str = str + ", " + u.getDisplayName();
+	        	}
+	        });
+	        getServer().getUsers().forEach(u -> {
+	        	try {
+	        		u.getCC().getSendingData().writeUTF("[System] " + SystemInfo.getDate() + ": " + getClientName() + " has connected.");
+					u.getCC().getSendingData().writeUTF("/updateusers " + str);
+				} catch (Exception e) {
+					e.printStackTrace();
 				}
-			});*/
+	        });
 
 			Thread audioThread = new Thread(() -> {
 				byte[] buffer = new byte[8192];
@@ -200,6 +200,22 @@ public class ClientConnection {
 			}
 		} catch (SocketException e) {
 			getServer().killUserAuto(getClientName(), "User disconnected.");
+			str = initStr;
+            getServer().getUsers().forEach(u -> {
+            	if (str.split(" ").length < 3) {
+            		str = str + " " + u.getDisplayName();
+            	} else {
+            		str = str + ", " + u.getDisplayName();
+            	}
+            	if (!u.getDisplayName().equals(clientName)) {
+            		try {
+            			u.getCC().getSendingData().writeUTF("/updateusers " + str);
+            			u.getCC().getSendingData().writeUTF("*![System] " + SystemInfo.getDate() + ": " + getClientName() + " has disconnected.");
+            		} catch (Exception e1) {
+            			e1.printStackTrace();
+            		}
+            	}
+            });
 		} catch (IOException e1) {
 			e1.printStackTrace();
 			FileHandler.writeToErrorLog(e1.getMessage());

@@ -10,6 +10,7 @@ import java.util.Iterator;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import tools.FileHandler;
 import tools.SystemInfo;
 
 public class Server implements Runnable {
@@ -40,38 +41,14 @@ public class Server implements Runnable {
 		this.password = password;
 		this.out = out;
 		
-		this.users.addListener(new ListChangeListener<User>() {
-			 
-            @SuppressWarnings("rawtypes")
-			@Override
-            public void onChanged(ListChangeListener.Change change) {
-            	str = initStr;
-                getUsers().forEach(u -> {
-                	if (str.split(" ").length < 3) {
-                		str = str + " " + u.getDisplayName();
-                	} else {
-                		str = str + ", " + u.getDisplayName();
-                	}
-                });
-                getUsers().forEach(u -> {
-                	try {
-                		change.next();
-                		u.getCC().getSendingData().writeUTF("[System] " + SystemInfo.getDate() + ": " + ((User) change.getAddedSubList().get(0)).getCC().getClientName() + " has connected.");
-                		out.println("[System] " + SystemInfo.getDate() + ": " + ((User) change.getAddedSubList().get(0)).getCC().getClientName() + " has connected.");
-						u.getCC().getSendingData().writeUTF("/updateusers " + str);
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-                });
-            }
-        });
-		
 		try {
 			this.server = new ServerSocket(port);
 			this.DLServer = new ServerSocket(port + 1);
 			this.VoiceServer = new ServerSocket(port + 2);
 			this.picServer = new ServerSocket(port + 3);
 			out.println("Server started successfully.");
+			FileHandler.saveProperties(this);
+			System.out.println("Saved server preferences.");
 			while (true) {
 				ClientConnection client = new ClientConnection(server.accept(), DLServer.accept(), VoiceServer.accept(), picServer.accept(), clientID++, this);
 				Thread clientThread = new Thread(() -> {

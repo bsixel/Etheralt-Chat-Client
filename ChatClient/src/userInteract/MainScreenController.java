@@ -5,11 +5,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 
 import application.ChatClient;
-import application.Launch;
 import application.WindowController;
 import client.Client;
 import javafx.application.Platform;
@@ -81,7 +79,6 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 	private VBox images = new VBox(10);
 	private ScrollPane imageScroll = new ScrollPane(getImages());
 	private HBox columnsContainer = new HBox();
-	private ProgressBar pb = new ProgressBar();
 
 	public MainScreenController(GridPane layout, Stage window, Scene currentScene, Scene nextScene, WindowController windowController) throws URISyntaxException, IOException {
 

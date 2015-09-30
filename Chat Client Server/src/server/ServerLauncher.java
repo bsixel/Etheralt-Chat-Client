@@ -19,13 +19,18 @@ public class ServerLauncher {
 			try {
 				System.out.println("Starting with password '" + args[1] + "'.");
 				server.startServer(Integer.parseInt(args[0]), true, args[1], out);
-			} catch (Exception e) {
+			} catch (Exception e){
 				try {
-					System.out.println("Starting with default password.");
-					server.startServer(Integer.parseInt(args[0]), true, "default", out);
+					System.out.println("Starting with password '" + FileHandler.getProperty("last_password") + "'.");
+					server.startServer(Integer.parseInt(FileHandler.getProperty("last_port")), true, FileHandler.getProperty("last_password"), out);
 				} catch (Exception e1) {
-					e1.printStackTrace();
-					FileHandler.writeToErrorLog(e1.getMessage());
+					try {
+						System.out.println("Starting with default password.");
+						server.startServer(Integer.parseInt(args[0]), true, "default", out);
+					} catch (Exception e2) {
+						e1.printStackTrace();
+						FileHandler.writeToErrorLog(e1.getMessage());
+					}
 				}
 			}
 		});

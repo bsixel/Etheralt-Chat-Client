@@ -24,7 +24,7 @@ public class FileHandler {
 	public static final String errorLogPath = System.getProperty("user.home") + "/Documents/Etheralt Chat Client/error_log.log";
 	public static final String downloadsPath = System.getProperty("user.home") + "/Documents/Etheralt Chat Client/Downloads";
 	public static final String picturesPath = System.getProperty("user.home") + "/Documents/Etheralt Chat Client/Pictures";
-	public static final String configPath = System.getProperty("user.home") + "/Documents/Etheralt Chat Client/chat_client.properties";
+	public static final String configPath = System.getProperty("user.home") + "/Documents/Etheralt Chat Client/chat_server.properties";
 	
 	public static void generateConfigFile() {
 		
@@ -89,6 +89,7 @@ public class FileHandler {
 			InputStream configReader = new FileInputStream(configFile);
 			Properties defaultProperties = new Properties();
 			defaultProperties.setProperty("last_port", "");
+			defaultProperties.setProperty("last_password", "");
 			
 			Properties userProperties = new Properties(defaultProperties);
 			userProperties.load(configReader);
@@ -221,6 +222,7 @@ public class FileHandler {
 			configFile.createNewFile();
 			Properties properties = new Properties();
 			properties.setProperty("last_port", ((Integer) server.getPortStart()).toString());
+			properties.setProperty("last_password", server.getPassword());
 			
 			OutputStream writer = new FileOutputStream(configFile);
 			properties.store(writer, "Saved user info");

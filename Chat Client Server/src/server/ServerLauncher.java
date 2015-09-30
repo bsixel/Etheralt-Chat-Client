@@ -11,7 +11,6 @@ public class ServerLauncher {
 	
 	public static void main(String[] args) throws IOException {
 		
-		// 104.131.58.169
 		// Defaults for the server port and server password.
 		Integer serverPort = 25565;
 		String serverPassword = "default";

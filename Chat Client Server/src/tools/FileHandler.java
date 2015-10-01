@@ -29,7 +29,9 @@ public class FileHandler {
 	public static void generateConfigFile() {
 		
 		try {
-			if (new File(configPath).createNewFile()) {
+			File file = new File(configPath);
+			file.getParentFile().mkdirs();
+			if (file.createNewFile()) {
 				
 				FileWriter writer = new FileWriter(configPath, true);
 				PrintWriter printer = new PrintWriter(writer);

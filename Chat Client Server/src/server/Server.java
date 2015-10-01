@@ -40,6 +40,7 @@ public class Server implements Runnable {
 	public void startServer(int port, boolean standalone, String password, PrintStream out) throws IOException {
 		this.password = password;
 		this.out = out;
+		FileHandler.generateConfigFile();
 		
 		try {
 			this.server = new ServerSocket(port);

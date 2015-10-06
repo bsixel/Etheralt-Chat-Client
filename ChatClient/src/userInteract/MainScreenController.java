@@ -18,7 +18,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ScrollPane.ScrollBarPolicy;
 import javafx.scene.control.TextArea;
@@ -152,7 +151,7 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 
 	public void scrollToBottom() {
 		try {
-			Thread.sleep(10);
+			Thread.sleep(50);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
@@ -262,7 +261,7 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 				key.consume();
 				if (this.getChatField().getText().startsWith("/")) {
 					Platform.runLater(() -> {
-						CommandParser.parse(this.getChatField().getText(), this, prevInput);
+						CommandParser.parseMSC(this.getChatField().getText(), this, prevInput);
 					});
 				} else {
 					try {

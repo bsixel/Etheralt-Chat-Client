@@ -175,7 +175,11 @@ public class ClientConnection {
 					Thread.currentThread().interrupt();
 					break;
 				}
-
+				
+				if (!received.startsWith("*!")) {
+					System.out.println("[" + this.getClientName() + "] " + SystemInfo.getDate() +  ": " + received);
+				}
+				
 				getServer().getUsers().forEach(e -> {
 
 					if (received.startsWith("*!")) {
@@ -188,7 +192,6 @@ public class ClientConnection {
 					} else {
 						try {
 							e.getCC().getSendingData().writeUTF("[" + this.getClientName() + "] " + SystemInfo.getDate() +  ": " + received);
-							System.out.println("[" + this.getClientName() + "] " + SystemInfo.getDate() +  ": " + received);
 						} catch (Exception ex) {
 							ex.printStackTrace();
 						}

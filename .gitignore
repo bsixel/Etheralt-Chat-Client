@@ -1,3 +1,7 @@
+*~
+*.class
 /.metadata
 /.recommenders
-/RemoteSystemsTempFiles
+*/bin
+.classpath
+.project

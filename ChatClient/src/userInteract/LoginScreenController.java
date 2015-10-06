@@ -211,7 +211,6 @@ public class LoginScreenController {
 			this.mainController.scrollToBottom();
 			FileHandler.saveProperties(this);
 			this.window.setScene(chatScreen);
-			window.setUserData(username);
 			window.setWidth(1075);
 			window.setHeight(750);
 			this.window.setMinWidth(1075);

@@ -20,11 +20,19 @@ import server.Server;
 
 public class FileHandler {
 	
-	public static final String chatLogPath = System.getProperty("user.home") + "/Documents/Etheralt Chat Client/server_chat_log.log";
-	public static final String errorLogPath = System.getProperty("user.home") + "/Documents/Etheralt Chat Client/error_log.log";
-	public static final String downloadsPath = System.getProperty("user.home") + "/Documents/Etheralt Chat Client/Downloads";
-	public static final String picturesPath = System.getProperty("user.home") + "/Documents/Etheralt Chat Client/Pictures";
-	public static final String configPath = System.getProperty("user.home") + "/Documents/Etheralt Chat Client/chat_server.properties";
+	public static final String chatLogPath = "server_chat_log.log";
+	public static final String errorLogPath = "error_log.log";
+	public static final String configPath = "chat_server.properties";
+	
+	public static void debugPrint(String msg) {
+		System.out.println(msg);
+		writeToErrorLog(msg);
+	}
+	
+	public static void chatPrint(String msg) {
+		System.out.println(msg);
+		writeToChatLog(msg);
+	}
 	
 	public static void generateConfigFile() {
 		
@@ -167,53 +175,6 @@ public class FileHandler {
 		reader.close();
 		
 		return n;
-		
-	}
-	
-	private static int getFileSize(URL url) {
-	    HttpURLConnection conn = null;
-	    try {
-	        conn = (HttpURLConnection) url.openConnection();
-	        conn.setRequestMethod("HEAD");
-	        conn.getInputStream();
-	        return conn.getContentLength();
-	    } catch (IOException e) {
-	        return -1;
-	    } finally {
-	        conn.disconnect();
-	    }
-	}
-	
-	public static void downloadFile(String url) throws IOException {
-		
-		Thread dlThread;
-		Runnable downloadFile = () -> {
-			try {
-				
-				URL link;
-				if (url.startsWith("https://") || url.startsWith("http://")) {
-					link = new URL(url);
-				} else {
-					link = new URL("http://" + url);
-				}
-				String fileType = url.substring(url.lastIndexOf(".") + 1);
-				ReadableByteChannel stream = Channels.newChannel(link.openStream());
-				String fileName = url.substring(url.lastIndexOf("/") + 1, url.lastIndexOf("."));
-				File file = new File(FileHandler.downloadsPath + "/" + fileName + "." + fileType);
-				FileOutputStream fileStream = new FileOutputStream(file);
-				int total = 0;
-				int count;
-				fileStream.getChannel().transferFrom(stream, 0, Long.MAX_VALUE);
-				fileStream.close();
-				stream.close();
-				Thread.currentThread().interrupt();
-				System.out.println("Download of " + fileName + " complete.");
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		};
-		dlThread = new Thread(downloadFile);
-		dlThread.start();
 		
 	}
 	

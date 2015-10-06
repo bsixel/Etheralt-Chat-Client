@@ -7,16 +7,17 @@ import java.io.PrintStream;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.Iterator;
-
 import tools.CommandParser;
 import tools.FileHandler;
 import tools.SystemInfo;
+import static tools.FileHandler.debugPrint;
+import static tools.FileHandler.chatPrint;
 
 /**
  * 
- * @author Ben
+ * @author Ben Sixel
  * ClientConnection: The object controlling the connection between the server and a client.
- *
+ * Controls Input and output streams for chat, file sharing, and (in the future) audio.
  *
  */
 
@@ -66,6 +67,7 @@ public class ClientConnection {
 	public void startConnection(PrintStream out) {
 		this.out = out;
 
+		//Establishing a connection with the remote client.
 		try {
 			this.acceptedData = new DataInputStream(this.textSocket.getInputStream());
 			this.sendingData = new DataOutputStream(this.textSocket.getOutputStream());
@@ -76,6 +78,8 @@ public class ClientConnection {
 			this.picAcceptedData = new DataInputStream(this.picSocket.getInputStream());
 			this.picSendingData = new DataOutputStream(this.picSocket.getOutputStream());
 
+			
+			//Verifying that the desired username is not taken and the user is providing the correct password to access the server.
 			while (true) {
 
 				String input = this.acceptedData.readUTF().trim();
@@ -89,14 +93,15 @@ public class ClientConnection {
 						}
 						if (!args[3].equals(this.getServer().getPassword())) {
 							this.getSendingData().writeUTF("*!decline:password");
-							out.println("User " + this.clientName + " failed to connect with password: '" + args[3] +"'");
-							out.println("Desired password: " + this.getServer().getPassword());
+							//Writing to console and error log of the unsuccessful password match.
+							debugPrint("User " + this.clientName + " failed to connect with password: '" + args[3] +"' from IP " + textSocket.getInetAddress());
+							debugPrint("Desired password: " + this.getServer().getPassword());
 							return;
 						} else if (this.getServer().getUsers().stream().anyMatch(e -> e.getDisplayName().equalsIgnoreCase(this.getClientName()))) {
 							this.getSendingData().writeUTF("*!decline:username");
 							return;
 						}
-						if (!this.getServer().getUsers().stream().anyMatch(e -> e.getDisplayName().equalsIgnoreCase(this.getClientName())) && args[3].equals(this.getServer().getPassword())) {
+						if (!this.getServer().getUsers().stream().anyMatch(e -> e.getDisplayName().equalsIgnoreCase(this.getClientName())) && (args[3].equals(this.getServer().getPassword()) || this.server.getPassword().equals("default"))) {
 							this.getSendingData().writeUTF("*!granted");
 							this.getServer().getUsers().add(new User(this.getClientName(), args[2], this));
 							break;
@@ -113,15 +118,18 @@ public class ClientConnection {
 	        		str = str + ", " + u.getDisplayName();
 	        	}
 	        });
+	        
+	        //Notifying other clients of the new user.
 	        getServer().getUsers().forEach(u -> {
 	        	try {
 	        		u.getCC().getSendingData().writeUTF("[System] " + SystemInfo.getDate() + ": " + getClientName() + " has connected.");
 					u.getCC().getSendingData().writeUTF("/updateusers " + str);
 				} catch (Exception e) {
-					e.printStackTrace();
+					debugPrint("Error notifying of new connection: " + e.getStackTrace()[0]);
 				}
 	        });
 
+	        //This audio thread is currently not really doing anything. Will eventually channel audio data from this client to the others.
 			Thread audioThread = new Thread(() -> {
 				byte[] buffer = new byte[8192];
 				int count = 0;
@@ -131,7 +139,7 @@ public class ClientConnection {
 						this.voiceSendingData.write(buffer, 0, count);
 					} catch (Exception e1) {
 						if (!this.running) {
-							System.err.println("Lost connection to client!");
+							System.err.println("Lost audio connection to client!");
 						}
 						break;
 					}
@@ -140,6 +148,7 @@ public class ClientConnection {
 			audioThread.setDaemon(true);
 			audioThread.start();
 
+			
 			while (this.running) {
 
 				String received = this.acceptedData.readUTF().trim();
@@ -161,11 +170,6 @@ public class ClientConnection {
 					this.picSendingData.close();
 
 					Iterator<User> iter = this.getServer().getUsers().iterator();
-					/*this.getServer().getUsers().forEach(u -> {
-						if (u.getCC().getClientName().equalsIgnoreCase(getClientName())) {
-							this.getServer().getUsers().remove(u);
-						}
-					});*/
 					iter.forEachRemaining(u -> {
 						if (u.getCC().getClientName().equalsIgnoreCase(getClientName())) {
 							iter.remove();
@@ -176,24 +180,27 @@ public class ClientConnection {
 					break;
 				}
 				
+				//Printing normal chat input to server console and chat log.
 				if (!received.startsWith("*!")) {
-					System.out.println("[" + this.getClientName() + "] " + SystemInfo.getDate() +  ": " + received);
+					chatPrint("[" + this.getClientName() + "] " + SystemInfo.getDate() +  ": " + received);
 				}
 				
+				//Distributing received input to either the command parser or the other connected clients.
 				getServer().getUsers().forEach(e -> {
 
 					if (received.startsWith("*!")) {
-						System.out.println("Received: " + received);
 						try {
 							CommandParser.parse(received, e.getCC(), this);
 						} catch (Exception ex) {
-							ex.printStackTrace();
+							debugPrint("Error while parsing command: " + received);
+							debugPrint(ex.getStackTrace()[2].toString());
 						}
 					} else {
 						try {
 							e.getCC().getSendingData().writeUTF("[" + this.getClientName() + "] " + SystemInfo.getDate() +  ": " + received);
 						} catch (Exception ex) {
-							ex.printStackTrace();
+							debugPrint("Error while sending message to clients!");
+							debugPrint(ex.getStackTrace()[2].toString());
 						}
 
 					}
@@ -202,6 +209,7 @@ public class ClientConnection {
 
 			}
 		} catch (SocketException e) {
+			//This should come into effect when the user disconnects on their own, whether by closing their client window or losing their connection.
 			getServer().killUser(getClientName(), "User disconnected.");
 			str = initStr;
             getServer().getUsers().forEach(u -> {
@@ -215,14 +223,15 @@ public class ClientConnection {
             			u.getCC().getSendingData().writeUTF("/updateusers " + str);
             			u.getCC().getSendingData().writeUTF("*![System] " + SystemInfo.getDate() + ": " + getClientName() + " has disconnected.");
             		} catch (Exception e1) {
-            			e1.printStackTrace();
+            			debugPrint("Error sending disconnect message for " + this.clientName + ".");
+            			debugPrint(e1.getStackTrace()[2].toString());
             		}
             	}
             });
 		} catch (IOException e1) {
-			e1.printStackTrace();
-			FileHandler.writeToErrorLog(e1.getMessage());
+			debugPrint(e1.getStackTrace()[2].toString());
 		} finally {
+			//In the unforseeable case that somehow the client expires server-side.
 			getServer().getUsers().remove(this);
 			try {
 				this.textSocket.close();
@@ -232,7 +241,7 @@ public class ClientConnection {
 				getServer().subClientID();
 				Thread.currentThread().interrupt();
 			} catch (IOException e1) {
-				e1.printStackTrace();
+				debugPrint("System exception: ClientConnection line "  + this.clientName + " was terminated unexpectedly. May have been kicked?");
 			}
 		}
 
@@ -240,6 +249,7 @@ public class ClientConnection {
 
 	int dlcount;
 
+	//Thread started when a client requests a download/file transfer.
 	public Thread genDLThread(String input) throws Exception {
 		Thread dlThread = new Thread(() -> {
 			byte[] buffer = new byte[8192];
@@ -257,20 +267,23 @@ public class ClientConnection {
 							try {
 								e.DLSendingData.write(buffer, 0, dlcount);
 							} catch (Exception e1) {
-								e1.printStackTrace();
+								debugPrint("Error sending file data from " + this.clientName + " to " + args[2] + ".");
+								debugPrint(e1.getStackTrace()[2].toString());
 							}
 						}
 					});
 				}
 
 			} catch (Exception e1) {
-				e1.printStackTrace();
+				debugPrint("Error sending file data from " + this.clientName + " to " + args[2] + ".");
+				debugPrint(e1.getStackTrace()[2].toString());
 			}
 			Thread.currentThread().interrupt();
 		});
 		return dlThread;
 	}
 
+	//Thread started when a client requests an image download/transfer.
 	int piccount;
 	public Thread genPicThread(String input) throws Exception {
 		Thread picThread = new Thread(() -> {
@@ -287,17 +300,18 @@ public class ClientConnection {
 					getServer().getUsers().stream().map(u -> u.getCC()).forEach(e -> {
 						if (e.clientName.equalsIgnoreCase(args[2]) || args[2].equalsIgnoreCase("all")) {
 							try {
-								//FileHandler.writeToErrorLog("CC wrote " + );
 								e.picSendingData.write(buffer, 0, piccount);
 							} catch (Exception e1) {
-								e1.printStackTrace();
+								debugPrint("Error sending image data from " + this.clientName + " to " + args[2] + ".");
+								debugPrint(e1.getStackTrace()[2].toString());
 							}
 						}
 					});
 				}
 
 			} catch (Exception e1) {
-				e1.printStackTrace();
+				debugPrint("Error sending image data from " + this.clientName + " to " + args[2] + ".");
+				debugPrint(e1.getStackTrace()[2].toString());
 			}
 			Thread.currentThread().interrupt();
 		});
@@ -330,6 +344,7 @@ public class ClientConnection {
 
 	}
 
+	//A whole bunch of getters and setters. Could probably cull some unused ones.
 	public void setClientName(String name) {
 		this.clientName = name;
 	}

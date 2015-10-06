@@ -321,5 +321,9 @@ public class Client {
 	public boolean isAdmin() {
 		return this.admin;
 	}
+
+	public void setAdmin(boolean admin) {
+		this.admin = admin;
+	}
 	
 }

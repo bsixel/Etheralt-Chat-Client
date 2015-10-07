@@ -50,6 +50,41 @@ public class Server implements Runnable {
 			out.println("Server started successfully.");
 			FileHandler.saveProperties(this);
 			System.out.println("Saved server preferences.");
+			System.out.print("> ");
+			while (true) {
+				ClientConnection client = new ClientConnection(server.accept(), DLServer.accept(), VoiceServer.accept(), picServer.accept(), clientID++, this);
+				Thread clientThread = new Thread(() -> {
+					System.out.println("Adding new client!");
+					client.startConnection(out);
+				});
+				clientThread.setDaemon(true);
+				clientThread.start();
+				
+			}
+			
+		} finally {
+			this.server.close();
+			this.DLServer.close();
+			this.VoiceServer.close();
+		}
+		
+	}
+	
+	public void startServer() throws IOException {
+		this.out = System.out;
+		FileHandler.generateConfigFile();
+		int port = Integer.parseInt(FileHandler.getProperty("last_port"));
+		
+		
+		try {
+			this.server = new ServerSocket(port);
+			this.DLServer = new ServerSocket(port + 1);
+			this.VoiceServer = new ServerSocket(port + 2);
+			this.picServer = new ServerSocket(port + 3);
+			out.println("Server started successfully.");
+			FileHandler.saveProperties(this);
+			System.out.println("Saved server preferences.");
+			System.out.print("> ");
 			while (true) {
 				ClientConnection client = new ClientConnection(server.accept(), DLServer.accept(), VoiceServer.accept(), picServer.accept(), clientID++, this);
 				Thread clientThread = new Thread(() -> {

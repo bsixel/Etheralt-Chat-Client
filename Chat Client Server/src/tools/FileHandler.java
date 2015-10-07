@@ -38,7 +38,6 @@ public class FileHandler {
 		
 		try {
 			File file = new File(configPath);
-			file.getParentFile().mkdirs();
 			if (file.createNewFile()) {
 				
 				FileWriter writer = new FileWriter(configPath, true);

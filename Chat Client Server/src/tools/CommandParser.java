@@ -50,7 +50,7 @@ public class CommandParser {
 				System.err.println("Error! Input = " + input);
 			}
 		}
-		
+		System.out.print("> ");
 	}
 	
 	public static void parse(String input, ClientConnection client, ClientConnection selfClient) {

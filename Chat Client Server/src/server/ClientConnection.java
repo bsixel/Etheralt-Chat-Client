@@ -1,17 +1,15 @@
 package server;
 
+import static tools.FileHandler.chatPrint;
+import static tools.FileHandler.debugPrint;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.Iterator;
 import tools.CommandParser;
-import tools.FileHandler;
 import tools.SystemInfo;
-import static tools.FileHandler.debugPrint;
-import static tools.FileHandler.chatPrint;
 
 /**
  * 
@@ -53,21 +51,35 @@ public class ClientConnection {
     String str;
 
 	//Objects
-	private PrintStream out;
 
+	/**
+	 * Initiates the server-side connection to a remote client.
+	 * @param socket
+	 * @param DLSocket
+	 * @param voiceSocket
+	 * @param picSocket
+	 * @param clientID
+	 * @param server
+	 */
 	public ClientConnection(Socket socket, Socket DLSocket, Socket voiceSocket, Socket picSocket, int clientID, Server server) {
 		this.textSocket = socket;
 		this.voiceSocket = voiceSocket;
 		this.DLSocket = DLSocket;
 		this.picSocket = picSocket;
 		this.clientID = clientID;
-		this.setServer(server);
+		this.server = server;
 	}
 
-	public void startConnection(PrintStream out) {
-		this.out = out;
+	/**
+	 * Starts the actual connection. Manages send/receive of data of multilpe kinds, including
+	 * chat, file transfer, and eventually audio.
+	 * @param printOut
+	 */
+	public void startConnection() {
 
-		//Establishing a connection with the remote client.
+		/**
+		 * Establishing a connection with the remote client.
+		 */
 		try {
 			this.acceptedData = new DataInputStream(this.textSocket.getInputStream());
 			this.sendingData = new DataOutputStream(this.textSocket.getOutputStream());
@@ -79,7 +91,10 @@ public class ClientConnection {
 			this.picSendingData = new DataOutputStream(this.picSocket.getOutputStream());
 
 			
-			//Verifying that the desired username is not taken and the user is providing the correct password to access the server.
+			/**
+			 * Verifying that the desired username is not taken,
+			 *  and the user is providing the correct password to access the server.
+			 */
 			while (true) {
 
 				String input = this.acceptedData.readUTF().trim();
@@ -119,7 +134,9 @@ public class ClientConnection {
 	        	}
 	        });
 	        
-	        //Notifying other clients of the new user.
+	        /**
+	         * Notifying other clients of the new user.
+	         */
 	        getServer().getUsers().forEach(u -> {
 	        	try {
 	        		u.getCC().getSendingData().writeUTF("[System] " + SystemInfo.getDate() + ": " + getClientName() + " has connected.");
@@ -129,7 +146,10 @@ public class ClientConnection {
 				}
 	        });
 
-	        //This audio thread is currently not really doing anything. Will eventually channel audio data from this client to the others.
+	        /**
+	         * This audio thread is currently not really doing anything.
+	         * Will eventually channel audio data from this client to the others.
+	         */
 			Thread audioThread = new Thread(() -> {
 				byte[] buffer = new byte[8192];
 				int count = 0;
@@ -180,12 +200,16 @@ public class ClientConnection {
 					break;
 				}
 				
-				//Printing normal chat input to server console and chat log.
+				/**
+				 * Printing normal chat input to server console and chat log.
+				 */
 				if (!received.startsWith("*!")) {
 					chatPrint("[" + this.getClientName() + "] " + SystemInfo.getDate() +  ": " + received);
 				}
 				
-				//Distributing received input to either the command parser or the other connected clients.
+				/**
+				 * Distributing received input to either the command parser or the other connected clients.
+				 */
 				getServer().getUsers().forEach(e -> {
 
 					if (received.startsWith("*!")) {
@@ -209,7 +233,10 @@ public class ClientConnection {
 
 			}
 		} catch (SocketException e) {
-			//This should come into effect when the user disconnects on their own, whether by closing their client window or losing their connection.
+			/**
+			 * This should come into effect when the user disconnects on their own, 
+			 * whether by closing their client window or losing their connection.
+			 */
 			getServer().killUser(getClientName(), "User disconnected.");
 			str = initStr;
             getServer().getUsers().forEach(u -> {
@@ -231,7 +258,10 @@ public class ClientConnection {
 		} catch (IOException e1) {
 			debugPrint(e1.getStackTrace()[2].toString());
 		} finally {
-			//In the unforseeable case that somehow the client expires server-side.
+			/**
+			 * In the unforseeable case that somehow the client expires server-side.
+			 * Actually this is probably done in this case of kicks.
+			 */
 			getServer().getUsers().remove(this);
 			try {
 				this.textSocket.close();
@@ -249,7 +279,12 @@ public class ClientConnection {
 
 	int dlcount;
 
-	//Thread started when a client requests a download/file transfer.
+	/**
+	 * Thread started when a client requests a download/file transfer.
+	 * @param input
+	 * @return
+	 * @throws Exception
+	 */
 	public Thread genDLThread(String input) throws Exception {
 		Thread dlThread = new Thread(() -> {
 			byte[] buffer = new byte[8192];
@@ -257,11 +292,9 @@ public class ClientConnection {
 			long length = Long.parseLong(args[4]);
 			try {
 				long total = 0;
-				int n = 0;
 				while (total != length) {
 					dlcount = this.DLAcceptedData.read(buffer, 0, 8192);
 					total += dlcount;
-					n += 1;
 					getServer().getUsers().stream().map(u -> u.getCC()).forEach(e -> {
 						if (e.clientName.equalsIgnoreCase(args[2]) || args[2].equalsIgnoreCase("all")) {
 							try {
@@ -283,8 +316,13 @@ public class ClientConnection {
 		return dlThread;
 	}
 
-	//Thread started when a client requests an image download/transfer.
 	int piccount;
+	/**
+	 * Thread started when a client requests an image download/transfer.
+	 * @param input
+	 * @return
+	 * @throws Exception
+	 */
 	public Thread genPicThread(String input) throws Exception {
 		Thread picThread = new Thread(() -> {
 			byte[] buffer = new byte[8192];
@@ -292,11 +330,9 @@ public class ClientConnection {
 			long length = Long.parseLong(args[4]);
 			try {
 				long total = 0;
-				int n = 0;
 				while (total != length) {
 					piccount = this.picAcceptedData.read(buffer, 0, 8192);
 					total += piccount;
-					n += 1;
 					getServer().getUsers().stream().map(u -> u.getCC()).forEach(e -> {
 						if (e.clientName.equalsIgnoreCase(args[2]) || args[2].equalsIgnoreCase("all")) {
 							try {
@@ -318,6 +354,10 @@ public class ClientConnection {
 		return picThread;
 	}
 
+	/** Method used to initiate file sending.
+	 * Uses the input from the remote client to determine file size and destination.
+	 * @param input
+	 */
 	public void sendFile(String input) {
 
 		Thread dlThread = null;
@@ -331,6 +371,10 @@ public class ClientConnection {
 
 	}
 
+	/** Method used to initiate image sending.
+	 * Uses the input from the remote client to determine file size and destination.
+	 * @param input
+	 */
 	public void sendImg(String input) {
 
 		Thread picThread = null;
@@ -344,7 +388,10 @@ public class ClientConnection {
 
 	}
 
-	//A whole bunch of getters and setters. Could probably cull some unused ones.
+	/**
+	 * A whole bunch of getters and setters.
+	 * Could probably cull some unused ones.
+	 */
 	public void setClientName(String name) {
 		this.clientName = name;
 	}
@@ -357,80 +404,40 @@ public class ClientConnection {
 		return sendingData;
 	}
 
-	public void setSendingData(DataOutputStream sendingData) {
-		this.sendingData = sendingData;
-	}
-
 	public Server getServer() {
 		return server;
-	}
-
-	public void setServer(Server server) {
-		this.server = server;
 	}
 
 	public Socket getSocket() {
 		return textSocket;
 	}
 
-	public void setSocket(Socket socket) {
-		this.textSocket = socket;
-	}
-
 	public DataInputStream getAcceptedData() {
 		return acceptedData;
-	}
-
-	public void setAcceptedData(DataInputStream acceptedData) {
-		this.acceptedData = acceptedData;
 	}
 
 	public Socket getDLSocket() {
 		return DLSocket;
 	}
 
-	public void setDLSocket(Socket dLSocket) {
-		DLSocket = dLSocket;
-	}
-
 	public DataInputStream getDLAcceptedData() {
 		return DLAcceptedData;
-	}
-
-	public void setDLAcceptedData(DataInputStream dLAcceptedData) {
-		DLAcceptedData = dLAcceptedData;
 	}
 
 	public DataOutputStream getDLSendingData() {
 		return DLSendingData;
 	}
 
-	public void setDLSendingData(DataOutputStream dLSendingData) {
-		DLSendingData = dLSendingData;
-	}
-
 	public Socket getVoiceSocket() {
 		return this.voiceSocket;
-	}
-
-	public void setVoiceSocket(Socket voiceSocket) {
-		this.voiceSocket = voiceSocket;
 	}
 
 	public DataInputStream getVoiceAcceptedData() {
 		return voiceAcceptedData;
 	}
 
-	public void setVoiceAcceptedData(DataInputStream voiceAcceptedData) {
-		this.voiceAcceptedData = voiceAcceptedData;
-	}
-
 	public DataOutputStream getVoiceSendingData() {
 		return voiceSendingData;
-	}
-
-	public void setVoiceSendingData(DataOutputStream voiceSendingData) {
-		this.voiceSendingData = voiceSendingData;
 	}
 
 	public int getClientID() {

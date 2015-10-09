@@ -8,12 +8,19 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import tools.FileHandler;
-import tools.SystemInfo;
 
-public class Server implements Runnable {
+/**
+ * 
+ * @author Ben Sixel
+ * The main server object. Controls general server maintenance, although it is not in charge of taking user import server-side.
+ * Handles the list of connected users and their respective server-side connections.
+ * Can be started either with no arguments and defaulting to no password on port 25566 or with a desired password and port.
+ *
+ */
+
+public class Server {
 	
 	//Lists
 	private ArrayList<User> usersSubList = new ArrayList<User>();
@@ -23,7 +30,6 @@ public class Server implements Runnable {
 	int clientID = 0;
 	
 	//Booleans
-	private boolean standalone = false;
 	
 	//Strings
     String initStr = "Connected users:";
@@ -37,7 +43,14 @@ public class Server implements Runnable {
 	private ServerSocket picServer;
 	private PrintStream out;
 	
-	public void startServer(int port, boolean standalone, String password, PrintStream out) throws IOException {
+	/**
+	 * Starts the server with the desired port and password. Also takes in the System.out of the main thread in case some change is made which affects the way java handles printing to the console.
+	 * @param port
+	 * @param password
+	 * @param out
+	 * @throws IOException
+	 */
+	public void startServer(int port, String password, PrintStream out) throws IOException {
 		this.password = password;
 		this.out = out;
 		FileHandler.generateConfigFile();
@@ -55,7 +68,7 @@ public class Server implements Runnable {
 				ClientConnection client = new ClientConnection(server.accept(), DLServer.accept(), VoiceServer.accept(), picServer.accept(), clientID++, this);
 				Thread clientThread = new Thread(() -> {
 					System.out.println("Adding new client!");
-					client.startConnection(out);
+					client.startConnection();
 				});
 				clientThread.setDaemon(true);
 				clientThread.start();
@@ -70,10 +83,53 @@ public class Server implements Runnable {
 		
 	}
 	
+	/**
+	 * Starts the server with the desired port and password. Also takes in the System.out of the main thread in case some change is made which affects the way java handles printing to the console.
+	 * @throws IOException
+	 */
 	public void startServer() throws IOException {
 		this.out = System.out;
 		FileHandler.generateConfigFile();
 		int port = Integer.parseInt(FileHandler.getProperty("last_port"));
+		
+		
+		try {
+			
+			this.server = new ServerSocket(port);
+			this.DLServer = new ServerSocket(port + 1);
+			this.VoiceServer = new ServerSocket(port + 2);
+			this.picServer = new ServerSocket(port + 3);
+			out.println("Server started successfully.");
+			FileHandler.saveProperties(this);
+			System.out.println("Saved server preferences.");
+			System.out.print("> ");
+			while (true) {
+				ClientConnection client = new ClientConnection(server.accept(), DLServer.accept(), VoiceServer.accept(), picServer.accept(), clientID++, this);
+				Thread clientThread = new Thread(() -> {
+					System.out.println("Adding new client!");
+					client.startConnection();
+				});
+				clientThread.setDaemon(true);
+				clientThread.start();
+				
+			}
+			
+		} finally {
+			this.server.close();
+			this.DLServer.close();
+			this.VoiceServer.close();
+		}
+		
+	}
+	
+	/**
+	 * Starts the server with the desired port and password. Also takes in the System.out of the main thread in case some change is made which affects the way java handles printing to the console.
+	 * @throws IOException
+	 */
+	public void startDefaultServer() throws IOException {
+		this.out = System.out;
+		FileHandler.generateConfigFile();
+		int port = 25566;
 		
 		
 		try {
@@ -89,7 +145,7 @@ public class Server implements Runnable {
 				ClientConnection client = new ClientConnection(server.accept(), DLServer.accept(), VoiceServer.accept(), picServer.accept(), clientID++, this);
 				Thread clientThread = new Thread(() -> {
 					System.out.println("Adding new client!");
-					client.startConnection(out);
+					client.startConnection();
 				});
 				clientThread.setDaemon(true);
 				clientThread.start();
@@ -192,14 +248,6 @@ public class Server implements Runnable {
 		this.clientID --;
 	}
 
-	public boolean isStandalone() {
-		return standalone;
-	}
-
-	public void setStandalone(boolean standalone) {
-		this.standalone = standalone;
-	}
-
 	public ServerSocket getDLServer() {
 		return DLServer;
 	}
@@ -230,10 +278,6 @@ public class Server implements Runnable {
 	
 	public String getPassword() {
 		return this.password;
-	}
-	
-	@Override
-	public void run() {
 	}
 
 	public int getPortStart() {

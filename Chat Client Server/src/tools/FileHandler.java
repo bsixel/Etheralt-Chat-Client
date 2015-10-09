@@ -10,13 +10,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
 import java.util.Properties;
 
 import server.Server;
+
+/**
+ * 
+ * @author Ben Sixel
+ * FileHandler class. Deals with system files: 
+ * writing to error logs, chat logs, creating directories and properties, etc.
+ */
 
 public class FileHandler {
 	
@@ -24,16 +27,27 @@ public class FileHandler {
 	public static final String errorLogPath = "error_log.log";
 	public static final String configPath = "chat_server.properties";
 	
+	/**
+	 * Static method to print a message to both the console and the error/debug log.
+	 * @param msg
+	 */
 	public static void debugPrint(String msg) {
 		System.out.println(msg);
 		writeToErrorLog(msg);
 	}
 	
+	/**
+	 * Static method to print a message to both the console and the chat log.
+	 * @param msg
+	 */
 	public static void chatPrint(String msg) {
 		System.out.println(msg);
 		writeToChatLog(msg);
 	}
 	
+	/**
+	 * Initiates a config file.
+	 */
 	public static void generateConfigFile() {
 		
 		try {
@@ -53,6 +67,11 @@ public class FileHandler {
 		
 	}
 	
+	/**
+	 * Gets a property from the server properties file.
+	 * @param property
+	 * @return
+	 */
 	public static String getProperty(String property) {
 		String res = null;
 		InputStream fileStream = null;
@@ -75,6 +94,11 @@ public class FileHandler {
 		
 	}
 	
+	/**
+	 * Sets a property in the server properties file.
+	 * @param property
+	 * @param value
+	 */
 	public static void setProperty(String property, String value) {
 		try {
 			File configFile = new File(configPath);
@@ -90,6 +114,10 @@ public class FileHandler {
 		
 	}
 	
+	/**
+	 * @deprecated Use {@link #saveProperties(Server)} instead.
+	 */
+	@Deprecated
 	public static void initUserPrefs() {
 		
 		try {
@@ -111,6 +139,10 @@ public class FileHandler {
 		
 	}
 	
+	/**
+	 * Used for writing messages to the server's chat log.
+	 * @param message
+	 */
 	public static void writeToChatLog(String message){
 		
 		try {
@@ -127,6 +159,10 @@ public class FileHandler {
 		
 	}
 	
+	/**
+	 * Used for writing messages to the server's error/debug log.
+	 * @param message
+	 */
 	public static void writeToErrorLog(String message){
 		
 		try {
@@ -143,6 +179,11 @@ public class FileHandler {
 		
 	}
 	
+	/**
+	 * 
+	 * @return
+	 * @throws IOException
+	 */
 	public static int getLogLength() throws IOException {
 		int n = 0;
 		
@@ -160,6 +201,11 @@ public class FileHandler {
 		
 	}
 	
+	/**
+	 * Returns the length of the config file. Exists in case it is needed later.
+	 * @return
+	 * @throws IOException
+	 */
 	public static int getConfigLength() throws IOException {
 		int n = 0;
 		
@@ -177,6 +223,10 @@ public class FileHandler {
 		
 	}
 	
+	/**
+	 * Stores the properties for a given server object.
+	 * @param server
+	 */
 	public static void saveProperties(Server server) {
 		
 		try {

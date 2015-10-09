@@ -28,14 +28,17 @@ public class User {
 	}
 	
 	/**
-	 * Some getters and setters.
+	 * Getter for the display name of the connected client.
 	 * @return
 	 */
-	
 	public String getDisplayName() {
 		return displayName;
 	}
 
+	/**
+	 * Setter for the display name of the connected client.
+	 * @param displayName
+	 */
 	public void setDisplayName(String displayName) {
 		this.displayName = displayName;
 	}

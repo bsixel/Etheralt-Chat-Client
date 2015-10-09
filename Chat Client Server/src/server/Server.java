@@ -82,13 +82,13 @@ public class Server {
 	}
 	
 	/**
-	 * Starts the server with the desired port and password.
+	 * Starts the server with the last port and the last password used, stored in the properties file.
 	 * @throws IOException
 	 */
 	public void startServer() throws IOException {
 		FileHandler.generateConfigFile();
 		int port = Integer.parseInt(FileHandler.getProperty("last_port"));
-		
+		this.password = FileHandler.getProperty("last_password");
 		
 		try {
 			
@@ -120,7 +120,7 @@ public class Server {
 	}
 	
 	/**
-	 * Starts the server with the desired port and password.
+	 * Starts the server with the default port (25566) and password ('default' or none).
 	 * @throws IOException
 	 */
 	public void startDefaultServer() throws IOException {

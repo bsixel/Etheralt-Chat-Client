@@ -6,8 +6,21 @@ import java.util.stream.Collectors;
 import server.ClientConnection;
 import server.Server;
 
+/**
+ * 
+ * @author Ben Sixel
+ * Command Parser for commands coming from both server and remote clients.
+ */
+
 public class CommandParser {
 	
+	/**
+	 * Gets the nth occurrense of a string c in another string str.
+	 * @param str
+	 * @param c
+	 * @param n
+	 * @return
+	 */
 	public static int nthOccurrence(String str, String c, int n) {
 	    int pos = str.indexOf(c, 0);
 	    while (n-- > 0 && pos != -1)
@@ -15,6 +28,11 @@ public class CommandParser {
 	    return pos;
 	}
 	
+	/**
+	 * Parses commands coming from the server itself.
+	 * @param input
+	 * @param server
+	 */
 	public static void parse(String input, Server server) {
 		String[] args = input.split(" ");
 		String command = args[0];
@@ -53,6 +71,12 @@ public class CommandParser {
 		System.out.print("> ");
 	}
 	
+	/**
+	 * Parses commands coming in from remote clients and redistributes or enacts them.
+	 * @param input
+	 * @param client
+	 * @param selfClient
+	 */
 	public static void parse(String input, ClientConnection client, ClientConnection selfClient) {
 
 		String[] args = input.split(" ");

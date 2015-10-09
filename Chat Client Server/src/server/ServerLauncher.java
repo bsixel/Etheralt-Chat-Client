@@ -18,7 +18,7 @@ import tools.FileHandler;
 public class ServerLauncher {
 	
 	/**
-	 * Main method.
+	 * Main method, takes args from console when launched as a String array.
 	 * @param args
 	 * @throws IOException
 	 */
@@ -34,7 +34,11 @@ public class ServerLauncher {
 				server.startServer(Integer.parseInt(args[0]), args[1]);
 			} catch (Exception e) {
 				try {
-					debugPrint("Starting with password 'default' on port " + FileHandler.getProperty("last_port"));
+					String lastPass = FileHandler.getProperty("last_password");
+					String lastPort = FileHandler.getProperty("last_port");
+					if (!lastPass.equals(null) && !lastPort.equals(null)) {
+						debugPrint("Starting with password '" + lastPass + "' on port " + lastPort + ".");
+					}
 					server.startServer();
 				} catch (Exception e1) {
 					try {

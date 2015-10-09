@@ -54,12 +54,12 @@ public class ClientConnection {
 
 	/**
 	 * Initiates the server-side connection to a remote client.
-	 * @param socket
-	 * @param DLSocket
-	 * @param voiceSocket
-	 * @param picSocket
-	 * @param clientID
-	 * @param server
+	 * @param socket The socket for text chat data.
+	 * @param DLSocket The socket for the file transfer system.
+	 * @param voiceSocket The socket for the voice data system; Not fully implemented.
+	 * @param picSocket The socket for image/media sharing.
+	 * @param clientID The ID given to the client on connecting.
+	 * @param server The server which is hosting the connection.
 	 */
 	public ClientConnection(Socket socket, Socket DLSocket, Socket voiceSocket, Socket picSocket, int clientID, Server server) {
 		this.textSocket = socket;
@@ -281,8 +281,8 @@ public class ClientConnection {
 
 	/**
 	 * Thread started when a client requests a download/file transfer.
-	 * @param input
-	 * @return
+	 * @param input The input from the remote client containing destination and file length.
+	 * @return A thread used for receiving/sending data for file transfers.
 	 * @throws Exception
 	 */
 	public Thread genDLThread(String input) throws Exception {

@@ -7,6 +7,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import tools.CommandParser;
 import tools.SystemInfo;
@@ -210,26 +211,30 @@ public class ClientConnection {
 				/**
 				 * Distributing received input to either the command parser or the other connected clients.
 				 */
-				getServer().getUsers().forEach(e -> {
+				try {
+					getServer().getUsers().forEach(e -> {
 
-					if (received.startsWith("*!")) {
-						try {
-							CommandParser.parse(received, e.getCC(), this);
-						} catch (Exception ex) {
-							debugPrint("Error while parsing command: " + received);
-							debugPrint(ex.getStackTrace()[2].toString());
+						if (received.startsWith("*!")) {
+							try {
+								CommandParser.parse(received, e.getCC(), this);
+							} catch (Exception ex) {
+								debugPrint("Error while parsing command: " + received);
+								debugPrint(ex.getStackTrace()[2].toString());
+							}
+						} else {
+							try {
+								e.getCC().getSendingData().writeUTF("[" + this.getClientName() + "] " + SystemInfo.getDate() +  ": " + received);
+							} catch (Exception ex) {
+								debugPrint("Error while sending message to clients!");
+								debugPrint(ex.getStackTrace()[2].toString());
+							}
+
 						}
-					} else {
-						try {
-							e.getCC().getSendingData().writeUTF("[" + this.getClientName() + "] " + SystemInfo.getDate() +  ": " + received);
-						} catch (Exception ex) {
-							debugPrint("Error while sending message to clients!");
-							debugPrint(ex.getStackTrace()[2].toString());
-						}
 
-					}
-
-				});
+					});
+				} catch (ConcurrentModificationException e) {
+					debugPrint("Tried removing a user twice!");
+				}
 
 			}
 		} catch (SocketException e) {

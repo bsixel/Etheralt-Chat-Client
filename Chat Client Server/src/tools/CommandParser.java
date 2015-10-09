@@ -15,7 +15,7 @@ import server.Server;
 public class CommandParser {
 	
 	/**
-	 * Gets the nth occurrense of a string c in another string str.
+	 * Gets the nth occurrence of a string c in another string str.
 	 * @param str
 	 * @param c
 	 * @param n

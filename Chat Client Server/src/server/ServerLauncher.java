@@ -29,8 +29,7 @@ public class ServerLauncher {
 		Scanner scanner = new Scanner(System.in);
 		Thread serverThread = new Thread(() -> {
 			try {
-				debugPrint("Starting with password '" + args[1] + "'.");
-				debugPrint("Args zero: " + args[0]);
+				debugPrint("Starting with password '" + args[1] + "' and port " + args[0] + ".");
 				server.startServer(Integer.parseInt(args[0]), args[1]);
 			} catch (Exception e) {
 				try {

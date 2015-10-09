@@ -63,6 +63,7 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 	private GridPane layout = new GridPane();
 
 	//Objects
+	private Thread clientThread;
 	private TextArea chatField = new TextArea();
 	private Label usernameLabel;
 	private TextArea usersArea = new TextArea("Connected users: ");
@@ -259,7 +260,9 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 		this.getChatField().addEventHandler(KeyEvent.KEY_PRESSED, key -> {
 			if (key.getCode() == KeyCode.ENTER) {
 				key.consume();
-				if (this.getChatField().getText().startsWith("/")) {
+				if (this.getChatField().getText().startsWith("*!")) {
+					
+				} else if (this.getChatField().getText().startsWith("/")) {
 					Platform.runLater(() -> {
 						CommandParser.parseMSC(this.getChatField().getText(), this, prevInput);
 					});
@@ -299,7 +302,6 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 	}
 
 	public void initMainScreen() {
-
 
 		initChatView();
 		initUsernameLabel();
@@ -408,20 +410,31 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 		this.images = images;
 	}
 	
-	@SuppressWarnings("deprecation")
 	public void logout() {
 		try {
-			this.client.getClientSendingData().writeUTF("*![System] " + SystemInfo.getDate() + ": " + this.client.getClientName() + " has disconnected.");
+			this.getClient().getClientSendingData().writeUTF("*![System] " + SystemInfo.getDate() + ": " + this.getClient().getClientName() + " has disconnected.");
+			FileHandler.writeToChatLog("[System] " + SystemInfo.getDate() + ": " + this.getClient().getClientName() + " has disconnected.");
+			this.getClient().getClientSendingData().writeUTF("*!kick " + this.client.getClientName() + " 'Client disconnected.'");
+			System.out.println("Yeah here.");
 			getClient().setRunning(false);
-		} catch (Exception ex) {
+			this.getClientThread().interrupt();
+		} catch (Exception e) {
 			
 		}
 		try {
 			window.close();
 			new ChatClient().launch(new Stage());
-		} catch (Exception e1) {
-			e1.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
+	}
+
+	public Thread getClientThread() {
+		return clientThread;
+	}
+
+	public void setClientThread(Thread clientThread) {
+		this.clientThread = clientThread;
 	}
 
 }

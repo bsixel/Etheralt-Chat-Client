@@ -3,6 +3,7 @@ package userInteract;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import application.WindowController;
 import javafx.application.Platform;
@@ -160,6 +161,10 @@ public class LoginScreenController {
 	}
 
 	private void login(boolean b) throws NumberFormatException, IOException {
+		
+		if (FileHandler.getProperty("computer_ID") == null) {
+			FileHandler.setProperty("computer_ID", UUID.randomUUID().toString());
+		}
 		if (getUsernameField().getText().contains(" ") || getUsernameField().getText().equals("")) {
 			Popups.startInfoDlg("", "Please enter a name with no spaces.");
 		} else if (!getUsernameField().getText().contains(" ")) {
@@ -267,6 +272,7 @@ public class LoginScreenController {
 						System.err.println("You probably tried closing the window without logging in. That throws errors.");
 					}
 				}
+				this.mainController.getClientThread().interrupt();
 				window.close();
 				System.exit(0);
 			}

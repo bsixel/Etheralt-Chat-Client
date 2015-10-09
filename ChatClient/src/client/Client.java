@@ -9,7 +9,6 @@ import java.net.InetAddress;
 import java.net.Socket;
 
 import javafx.application.Platform;
-import javafx.scene.control.PasswordField;
 import sun.audio.AudioData;
 import sun.audio.AudioPlayer;
 import sun.audio.AudioStream;
@@ -23,7 +22,7 @@ public class Client {
 	//booleans
 	private boolean running = true;
 	private boolean milTime = true;
-	private boolean admin;
+	private boolean admin = false;
 	
 	//Objects
 	private Socket textSocket;
@@ -41,14 +40,11 @@ public class Client {
 	private LoginScreenController ls;
 	private AudioData ad;
 	private byte[] voiceInput = new byte[8192];
-	private PrintStream out;
 	
 	//Strings
 	private String clientname;
 
-	
 	public void startClient(String IP, int port, LoginScreenController ls, String password, PrintStream out, Object lock) throws IOException {
-		this.out = out;
 		
 		this.textSocket = new Socket(InetAddress.getByName(IP), port);
 		this.textInData = new DataInputStream(this.textSocket.getInputStream());
@@ -106,13 +102,6 @@ public class Client {
 		}
 		ls.setLocked(false);
 		
-		/*synchronized (lock) {
-			ls.toggleLock();
-			Platform.runLater(() -> {
-				System.out.println("Unlocked from client.");
-			});
-		}*/
-		
 		Thread audioThread = new Thread(() -> {
 			try {
 				InputStream stream = this.getVoiceInData();
@@ -120,7 +109,7 @@ public class Client {
 				AudioPlayer.player.start(audioStream);
 			} catch (Exception e) {
 				if (!this.running) {
-					e.printStackTrace();
+					System.out.println("Probably closed the client, still working on graceful audio shutdown.");
 				}
 			}
 		});
@@ -153,6 +142,15 @@ public class Client {
 			}
 			previous = input;
 		}
+		System.out.println("Stopped running client.");
+		this.DLInData.close();
+		this.DLOutData.close();
+		this.voiceInData.close();
+		this.voiceOutData.close();
+		this.picInData.close();
+		this.picOutData.close();
+		this.textInData.close();
+		this.textOutData.close();
 		} catch (java.io.EOFException e) {
 			Platform.runLater(() -> {
 				ls.getMainController().logout();

@@ -1,9 +1,10 @@
 package server;
 
 import static tools.FileHandler.debugPrint;
+
 import java.io.IOException;
-import java.io.PrintStream;
 import java.util.Scanner;
+
 import tools.CommandParser;
 import tools.FileHandler;
 
@@ -26,12 +27,11 @@ public class ServerLauncher {
 		Server server = new Server();
 		@SuppressWarnings("resource")
 		Scanner scanner = new Scanner(System.in);
-		PrintStream out = System.out;
 		Thread serverThread = new Thread(() -> {
 			try {
 				debugPrint("Starting with password '" + args[1] + "'.");
 				debugPrint("Args zero: " + args[0]);
-				server.startServer(Integer.parseInt(args[0]), args[1], out);
+				server.startServer(Integer.parseInt(args[0]), args[1]);
 			} catch (Exception e) {
 				try {
 					debugPrint("Starting with password 'default' on port " + FileHandler.getProperty("last_port"));

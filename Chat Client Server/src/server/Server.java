@@ -1,7 +1,8 @@
 package server;
 
+import static tools.FileHandler.debugPrint;
+
 import java.io.IOException;
-import java.io.PrintStream;
 import java.net.ServerSocket;
 import java.net.SocketException;
 import java.util.ArrayList;
@@ -41,7 +42,6 @@ public class Server {
 	private ServerSocket DLServer;
 	private ServerSocket VoiceServer;
 	private ServerSocket picServer;
-	private PrintStream out;
 	
 	/**
 	 * Starts the server with the desired port and password. Also takes in the System.out of the main thread in case some change is made which affects the way java handles printing to the console.
@@ -50,17 +50,15 @@ public class Server {
 	 * @param out
 	 * @throws IOException
 	 */
-	public void startServer(int port, String password, PrintStream out) throws IOException {
+	public void startServer(int port, String password) throws IOException {
 		this.password = password;
-		this.out = out;
 		FileHandler.generateConfigFile();
 		
 		try {
 			this.server = new ServerSocket(port);
 			this.DLServer = new ServerSocket(port + 1);
 			this.VoiceServer = new ServerSocket(port + 2);
-			this.picServer = new ServerSocket(port + 3);
-			out.println("Server started successfully.");
+			debugPrint("Server started successfully.");
 			FileHandler.saveProperties(this);
 			System.out.println("Saved server preferences.");
 			System.out.print("> ");
@@ -84,11 +82,10 @@ public class Server {
 	}
 	
 	/**
-	 * Starts the server with the desired port and password. Also takes in the System.out of the main thread in case some change is made which affects the way java handles printing to the console.
+	 * Starts the server with the desired port and password.
 	 * @throws IOException
 	 */
 	public void startServer() throws IOException {
-		this.out = System.out;
 		FileHandler.generateConfigFile();
 		int port = Integer.parseInt(FileHandler.getProperty("last_port"));
 		
@@ -99,7 +96,7 @@ public class Server {
 			this.DLServer = new ServerSocket(port + 1);
 			this.VoiceServer = new ServerSocket(port + 2);
 			this.picServer = new ServerSocket(port + 3);
-			out.println("Server started successfully.");
+			debugPrint("Server started successfully.");
 			FileHandler.saveProperties(this);
 			System.out.println("Saved server preferences.");
 			System.out.print("> ");
@@ -123,11 +120,10 @@ public class Server {
 	}
 	
 	/**
-	 * Starts the server with the desired port and password. Also takes in the System.out of the main thread in case some change is made which affects the way java handles printing to the console.
+	 * Starts the server with the desired port and password.
 	 * @throws IOException
 	 */
 	public void startDefaultServer() throws IOException {
-		this.out = System.out;
 		FileHandler.generateConfigFile();
 		int port = 25566;
 		
@@ -137,7 +133,7 @@ public class Server {
 			this.DLServer = new ServerSocket(port + 1);
 			this.VoiceServer = new ServerSocket(port + 2);
 			this.picServer = new ServerSocket(port + 3);
-			out.println("Server started successfully.");
+			debugPrint("Server started successfully.");
 			FileHandler.saveProperties(this);
 			System.out.println("Saved server preferences.");
 			System.out.print("> ");
@@ -159,6 +155,11 @@ public class Server {
 		}
 		
 	}
+	
+	/**
+	 * Some getters and setters.
+	 * @return
+	 */
 
 	public ServerSocket getServer() {
 		return server;
@@ -186,13 +187,18 @@ public class Server {
 		this.users.add(user);
 	}
 	
+	/**
+	 * Method for removing users forcefully from the server (kicks, client-side disconnects, etc).
+	 * @param name
+	 * @param reason
+	 */
 	public void killUser(String name, String reason) {
 		Iterator<User> iter = getUsers().iterator();
 		while (iter.hasNext()) {
 			User u;
 			synchronized (u = iter.next()) {
 				if (u.getDisplayName().equalsIgnoreCase(name)) {
-					out.println("Killed user " + u.getDisplayName());
+					debugPrint("Killed user " + u.getDisplayName());
 					try {
 						u.getCC().getSendingData().writeUTF("/kicked: '" + reason + "'");
 						u.getCC().getDLSocket().close();
@@ -209,13 +215,18 @@ public class Server {
 		getUsers().removeIf(u -> u.getDisplayName().equalsIgnoreCase(name));
 	}
 	
+	/**
+	 * Another method for removing users forcefully from the server (kicks, client-side disconnects, etc).
+	 * @param name
+	 * @param reason
+	 */
 	public void killUserAuto(String name, String reason) {
 		Iterator<User> iter = getUsers().iterator();
 		while (iter.hasNext()) {
 			User u;
 			synchronized (u = iter.next()) {
 				if (u.getDisplayName().equalsIgnoreCase(name)) {
-					out.println("Killed user " + u.getDisplayName());
+					debugPrint("Killed user " + u.getDisplayName());
 					try {
 						u.getCC().getSendingData().writeUTF("/kicked: '" + reason + "'");
 						u.getCC().getDLSocket().close();
@@ -231,6 +242,11 @@ public class Server {
 		}
 		
 	}
+	
+	/**
+	 * More getters and setters.
+	 * @return
+	 */
 
 	public int getClientID() {
 		return clientID;

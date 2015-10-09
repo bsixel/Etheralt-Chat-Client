@@ -2,6 +2,12 @@ package server;
 
 import server.ClientConnection;
 
+/**
+ * User object used to store information about the remote client.
+ * @author Ben Sixel
+ *
+ */
+
 public class User {
 	
 	private String displayName;
@@ -9,11 +15,22 @@ public class User {
 	private ClientConnection CC;
 	private boolean admin = false;
 	
+	/**
+	 * Constructor for a user.
+	 * @param username
+	 * @param ID
+	 * @param CC
+	 */
 	public User(String username, String ID, ClientConnection CC) {
 		this.displayName = username;
 		this.ID = ID;
 		this.CC = CC;
 	}
+	
+	/**
+	 * Some getters and setters.
+	 * @return
+	 */
 	
 	public String getDisplayName() {
 		return displayName;

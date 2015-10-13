@@ -12,7 +12,6 @@ import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
@@ -55,7 +54,6 @@ public class LoginScreenController {
 	private WindowController windowController;
 	private MainScreenController mainController;
 	private HBox IPLayout = new HBox(10);
-	private TextField IPField;
 	private ComboBox<String> IPChoice = new ComboBox<String>();
 	private Label IPLabel;
 	private TextField portField;
@@ -70,42 +68,32 @@ public class LoginScreenController {
 	}
 
 	private void initIPField() {
-
-		/*
-		 *  TESTING CHOICE BOX THING
-		 */
-		List<String> ips = Arrays.asList(FileHandler.getProperty("prev_ips").split(","));
+		
+		List<String> ips;
+		try {
+			ips = Arrays.asList(FileHandler.getProperty("prev_ips").split(","));
+		} catch (NullPointerException e1) {
+			ips = new ArrayList<String>();
+			System.err.println("Error loading previous IPs from config - loading defaults (empty).");
+		}
 		this.IPChoice.getItems().addAll(ips);
 		this.IPChoice.setEditable(true);
 		
 		this.IPLabel = new Label("Please enter a host IP address and port: ");
 
-		this.setIPField(new TextField());
-
-		String prevIP = FileHandler.getProperty("last_IP");
-		if (prevIP == null) {
-			FileHandler.setProperty("last_IP", "");
-		} else if (prevIP != null) {
-			this.getIPField().setText(prevIP);
-		}
-
 		this.IPChoice.setMaxSize(175, 10);
 		this.IPChoice.setPrefSize(175, 10);
-		
-		
-		this.getIPField().setMaxSize(175, 10);
-		this.getIPField().setPrefSize(175, 10);
 
-		this.getIPField().addEventHandler(KeyEvent.KEY_PRESSED, key -> {
+		this.IPChoice.addEventHandler(KeyEvent.KEY_PRESSED, key -> {
 			if (key.getCode() == KeyCode.ENTER) {
-				if ((getIPField().getText().contains(" ") || getIPField().getText().equals("")
-						|| getIPField().getText().equals(null))
-						&& (getIPField().getText().contains(" ") || getIPField().getText().equals("")
-								|| getIPField().getText().equals(null))) {
+				if ((this.getIPChoice().contains(" ") || this.getIPChoice().equals("")
+						|| this.getIPChoice().equals(null))
+						&& (this.getIPChoice().contains(" ") || this.getIPChoice().equals("")
+								|| this.getIPChoice().equals(null))) {
 					Popups.startInfoDlg("Invalid IP", "Please enter a valid host.");
-				} else if (!(getIPField().getText().contains(" ") || getIPField().getText().equals(""))
-						&& (getIPField().getText().contains(" ") || getIPField().getText().equals("")
-								|| getIPField().getText().equals(null))) {
+				} else if (!(this.getIPChoice().contains(" ") || this.getIPChoice().equals(""))
+						&& (this.getIPChoice().contains(" ") || this.getIPChoice().equals("")
+								|| this.getIPChoice().equals(null))) {
 					try {
 						login(false);
 					} catch (Exception e) {
@@ -149,9 +137,9 @@ public class LoginScreenController {
 		this.getUsernameField().setPrefSize(215, 15);
 		this.getUsernameField().addEventHandler(KeyEvent.KEY_PRESSED, key -> {
 			if (key.getCode() == KeyCode.ENTER) {
-				if ((getIPField().getText().contains(" ") || getIPField().getText().equals("") || getIPField().getText().equals(null))) {
+				if ((this.getIPChoice().contains(" ") || this.getIPChoice().equals("") || this.getIPChoice().equals(null))) {
 					Popups.startInfoDlg("Invalid IP", "Please enter a valid host IP address.");
-				} else if (!(getIPField().getText().contains(" ") || getIPField().getText().equals(""))) {
+				} else if (!(this.getIPChoice().contains(" ") || this.getIPChoice().equals(""))) {
 					try {
 						login(false);
 					} catch (Exception e) {
@@ -191,7 +179,6 @@ public class LoginScreenController {
 			String pass = Popups.startPasswdDlg("Enter server password:");
 			Object lock = new Object();
 			Runnable startClient = () -> {
-				String normalIP = this.getIPField().getText();
 				String testIP = this.getIPChoice();
 				try {
 					getMainController().getClient().startClient(testIP, Integer.parseInt(this.getPortField().getText()), this, pass, System.out, lock);
@@ -249,10 +236,11 @@ public class LoginScreenController {
 		this.loginButton = new Button();
 		this.loginButton.setText("Log in");
 		this.loginButton.addEventHandler(ActionEvent.ACTION, e -> {
-			if (getIPField().getText().contains(" ") || getIPField().getText().equals("")
-					|| getIPField().getText().equals(null)) {
+			System.err.println("This is supposedly the getIPChoice value return for line 239:" + this.getIPChoice());
+			if (this.getIPChoice().contains(" ") || this.getIPChoice().equals("")
+					|| this.getIPChoice().equals(null)) {
 				Popups.startInfoDlg("Invalid IP", "Please enter a valid host IP address.");
-			} else if (!(getIPField().getText().contains(" ") || getIPField().getText().equals(""))) {
+			} else if (!(this.getIPChoice().contains(" ") || this.getIPChoice().equals(""))) {
 				try {
 					login(false);
 				} catch (Exception e1) {
@@ -313,14 +301,6 @@ public class LoginScreenController {
 
 	public void setUsernameField(TextField usernameField) {
 		this.usernameField = usernameField;
-	}
-
-	public TextField getIPField() {
-		return IPField;
-	}
-
-	public void setIPField(TextField iPField) {
-		IPField = iPField;
 	}
 
 	public TextField getPortField() {

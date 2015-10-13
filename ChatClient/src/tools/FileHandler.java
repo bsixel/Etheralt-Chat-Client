@@ -14,12 +14,12 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.util.Properties;
 import java.util.UUID;
 
+import client.Client;
 import javafx.application.Platform;
 import javafx.event.EventHandler;
 import javafx.scene.image.Image;
@@ -31,7 +31,6 @@ import userInteract.ChatText;
 import userInteract.LoginScreenController;
 import userInteract.MainScreenController;
 import userInteract.Popups;
-import client.Client;
 
 public class FileHandler {
 	
@@ -283,8 +282,6 @@ public class FileHandler {
 				String fileName = url.substring(url.lastIndexOf("/") + 1, url.lastIndexOf("."));
 				File file = new File(FileHandler.downloadsPath + "/" + fileName + "." + fileType);
 				FileOutputStream fileStream = new FileOutputStream(file);
-				int total = 0;
-				int count;
 				fileStream.getChannel().transferFrom(stream, 0, Long.MAX_VALUE);
 				fileStream.close();
 				stream.close();
@@ -322,7 +319,7 @@ public class FileHandler {
 			}
 			
 			properties.setProperty("last_username", ls.getUsernameField().getText());
-			properties.setProperty("last_IP", ls.getIPField().getText());
+			properties.setProperty("last_IP", ls.getIPChoice());
 			properties.setProperty("last_port", ls.getPortField().getText());
 			try {
 				if (!properties.getProperty("prev_ips").contains(ls.getIPChoice())) {
@@ -384,7 +381,6 @@ public class FileHandler {
 		Runnable run = () -> {
 			int count = 1;
 			try {
-				int total = 0;
 				byte[] fileBuffer = new byte[8192];
 				FileInputStream fileStream = new FileInputStream(file);
 				String name = file.getName().replaceAll(" ", "_");
@@ -392,7 +388,6 @@ public class FileHandler {
 				client.getTextOutData().writeUTF("*!sendfile: " + client.getClientName() + " " + target + " " + name + " " + file.length());
 				
 				while ((count = fileStream.read(fileBuffer, 0, 8192)) > 0) {
-					total += count;
 					client.getDLOutData().write(fileBuffer, 0, count);
 					client.getDLOutData().flush();
 				}
@@ -453,13 +448,11 @@ public class FileHandler {
 		Runnable run = () -> {
 			int count = 1;
 			try {
-				int total = 0;
 				byte[] fileBuffer = new byte[8192];
 				FileInputStream fileStream = new FileInputStream(file);
 				String name = file.getName().replaceAll(" ", "_");
 				client.getTextOutData().writeUTF("*!sendimg: " + client.getClientName() + " " + target + " " + name + " " + file.length());
 				while ((count = fileStream.read(fileBuffer, 0, 8192)) > 0) {
-					total += count;
 					client.getPicOutData().write(fileBuffer, 0, count);
 					client.getPicOutData().flush();
 				}
@@ -479,12 +472,9 @@ public class FileHandler {
 		Client client = sc.getClient();
 		int count = 1;
 		try {
-			int total = 0;
 			byte[] fileBuffer = new byte[8192];
 			FileInputStream fileStream = new FileInputStream(file);
-			String name = file.getName().replaceAll(" ", "_");
 			while ((count = fileStream.read(fileBuffer, 0, 8192)) > 0) {
-				total += count;
 				client.getVoiceOutData().write(fileBuffer, 0, count);
 				client.getVoiceOutData().flush();
 			}

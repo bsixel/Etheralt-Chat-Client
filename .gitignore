@@ -2,25 +2,11 @@
 **/*.class
 **/.metadata
 **/.recommenders
-**/bin
+ChatClient/bin
+ChatClient/build
+ChatClient/build.fxbuild
 **.classpath
-**/*.project
+ChatClient/.project
+ChatServer/.project
 **/*.properties
 **/*.log
-=======
-*~
-*.class
-*/.metadata
-*/.recommenders
-*/bin
-<<<<<<< Updated upstream
-*.classpath
-*.project
-=======
-ChatClient/.classpath
-Chat\ Client\ Server/.classpath
-.project
->>>>>>> Stashed changes
-*.properties
-*.log
->>>>>>> 0903aa053325328cced5984b0bc44efd4fa53896

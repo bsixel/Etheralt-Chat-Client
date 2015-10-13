@@ -2,11 +2,12 @@
 **/*.class
 **/.metadata
 **/.recommenders
-ChatClient/bin
-ChatClient/build
+ChatClient/bin/
+ChatClient/build/
 ChatClient/build.fxbuild
 **.classpath
 ChatClient/.project
 ChatServer/.project
 **/*.properties
 **/*.log
+*~

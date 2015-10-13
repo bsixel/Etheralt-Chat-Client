@@ -3,7 +3,13 @@
 */.metadata
 */.recommenders
 */bin
+<<<<<<< Updated upstream
 *.classpath
 *.project
+=======
+ChatClient/.classpath
+Chat\ Client\ Server/.classpath
+.project
+>>>>>>> Stashed changes
 *.properties
 *.log

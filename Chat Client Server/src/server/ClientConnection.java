@@ -261,7 +261,8 @@ public class ClientConnection {
             	}
             });
 		} catch (IOException e1) {
-			debugPrint(e1.getStackTrace()[2].toString());
+			debugPrint(e1.getStackTrace()[1].toString());
+			this.server.killUser(clientName, "Lost connection to client.");
 		} finally {
 			/**
 			 * In the unforseeable case that somehow the client expires server-side.

@@ -2,6 +2,7 @@ package userInteract;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -11,9 +12,10 @@ import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
-import javafx.scene.control.Tooltip;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
@@ -54,6 +56,7 @@ public class LoginScreenController {
 	private MainScreenController mainController;
 	private HBox IPLayout = new HBox(10);
 	private TextField IPField;
+	private ComboBox<String> IPChoice = new ComboBox<String>();
 	private Label IPLabel;
 	private TextField portField;
 
@@ -68,6 +71,13 @@ public class LoginScreenController {
 
 	private void initIPField() {
 
+		/*
+		 *  TESTING CHOICE BOX THING
+		 */
+		List<String> ips = Arrays.asList(FileHandler.getProperty("prev_ips").split(","));
+		this.IPChoice.getItems().addAll(ips);
+		this.IPChoice.setEditable(true);
+		
 		this.IPLabel = new Label("Please enter a host IP address and port: ");
 
 		this.setIPField(new TextField());
@@ -79,6 +89,10 @@ public class LoginScreenController {
 			this.getIPField().setText(prevIP);
 		}
 
+		this.IPChoice.setMaxSize(175, 10);
+		this.IPChoice.setPrefSize(175, 10);
+		
+		
 		this.getIPField().setMaxSize(175, 10);
 		this.getIPField().setPrefSize(175, 10);
 
@@ -114,7 +128,7 @@ public class LoginScreenController {
 		this.getPortField().setMaxSize(50, 10);
 		this.getPortField().setPrefSize(50, 10);
 
-		this.IPLayout.getChildren().addAll(this.getIPField(), this.getPortField());
+		this.IPLayout.getChildren().addAll(this.IPChoice, this.getPortField());
 		this.layout.getChildren().addAll(this.IPLabel, this.IPLayout);
 		this.IPLayout.setAlignment(Pos.CENTER);
 
@@ -177,8 +191,10 @@ public class LoginScreenController {
 			String pass = Popups.startPasswdDlg("Enter server password:");
 			Object lock = new Object();
 			Runnable startClient = () -> {
+				String normalIP = this.getIPField().getText();
+				String testIP = this.getIPChoice();
 				try {
-					getMainController().getClient().startClient(this.getIPField().getText(), Integer.parseInt(this.getPortField().getText()), this, pass, System.out, lock);
+					getMainController().getClient().startClient(testIP, Integer.parseInt(this.getPortField().getText()), this, pass, System.out, lock);
 				} catch (Exception e) {
 					Platform.runLater(() -> {System.err.println("Line " + e.getStackTrace()[0].getLineNumber() + ": Unable to start client; incorrect password or invalid server. Might also have been kicked from server.");});
 					Platform.runLater(() -> {getMainController().logout();});
@@ -250,12 +266,12 @@ public class LoginScreenController {
 
 	public void initLoginScreen() {
 
+		FileHandler.initUserPrefs();
 		initUserField();
 		initLoginButton();
 		initUsernameLabel();
 		this.layout.getChildren().addAll(this.loginButton);
 		initIPField();
-		FileHandler.initUserPrefs();
 		window.setWidth(250);
 		window.setHeight(400);
 		layout.setAlignment(Pos.CENTER);
@@ -272,7 +288,6 @@ public class LoginScreenController {
 						System.err.println("You probably tried closing the window without logging in. That throws errors.");
 					}
 				}
-				this.mainController.getClientThread().interrupt();
 				window.close();
 				System.exit(0);
 			}
@@ -354,6 +369,14 @@ public class LoginScreenController {
 	
 	public boolean getNameTaken() {
 		return this.nameTaken;
+	}
+
+	public String getIPChoice() {
+		return IPChoice.getValue();
+	}
+
+	public void setIPChoice(ComboBox<String> iPChoice) {
+		IPChoice = iPChoice;
 	}
 
 }

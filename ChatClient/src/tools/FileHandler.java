@@ -42,7 +42,8 @@ public class FileHandler {
 	public static final String configPath = System.getProperty("user.home") + "/Documents/Etheralt Chat Client/chat_client.properties";
 	
 	public static void generateConfigFile() {
-		
+
+		"".contains("blah");
 		try {
 			if (new File(configPath).createNewFile()) {
 				
@@ -109,6 +110,7 @@ public class FileHandler {
 			defaultProperties.setProperty("last_IP", "");
 			defaultProperties.setProperty("last_port", "");
 			defaultProperties.setProperty("milTime", "");
+			defaultProperties.setProperty("prev_ips", "");
 			
 			Properties userProperties = new Properties(defaultProperties);
 			userProperties.load(configReader);
@@ -322,6 +324,15 @@ public class FileHandler {
 			properties.setProperty("last_username", ls.getUsernameField().getText());
 			properties.setProperty("last_IP", ls.getIPField().getText());
 			properties.setProperty("last_port", ls.getPortField().getText());
+			try {
+				if (!properties.getProperty("prev_ips").contains(ls.getIPChoice())) {
+					properties.setProperty("prev_ips", properties.getProperty("prev_ips") + "," +ls.getIPChoice());
+				} else {
+					properties.setProperty("prev_ips", properties.getProperty("prev_ips"));
+				}
+			} catch (Exception e) {
+				System.out.println("Supposed storing IP: " + properties.getProperty("prev_ips") + " and " + ls.getIPChoice());
+			}
 			
 			OutputStream writer = new FileOutputStream(configFile);
 			properties.store(writer, "Saved user info");

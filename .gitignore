@@ -11,3 +11,4 @@ ChatServer/.project
 **/*.properties
 **/*.log
 *~
+/RemoteSystemsTempFiles/

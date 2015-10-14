@@ -227,6 +227,7 @@ public class Server {
 			synchronized (u = iter.next()) {
 				if (u.getDisplayName().equalsIgnoreCase(name)) {
 					debugPrint("Killed user " + u.getDisplayName());
+					System.out.print("> ");
 					try {
 						u.getCC().getSendingData().writeUTF("/kicked: '" + reason + "'");
 						u.getCC().getDLSocket().close();

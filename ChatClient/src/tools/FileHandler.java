@@ -328,6 +328,7 @@ public class FileHandler {
 					properties.setProperty("prev_ips", properties.getProperty("prev_ips"));
 				}
 			} catch (Exception e) {
+				properties.setProperty("prev_ips", ls.getIPChoice());
 				System.err.println("Error saving last IP!");
 			}
 			

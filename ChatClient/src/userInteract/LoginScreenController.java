@@ -72,13 +72,13 @@ public class LoginScreenController {
 		List<String> ips;
 		try {
 			ips = Arrays.asList(FileHandler.getProperty("prev_ips").split(","));
+			this.IPChoice.setValue(ips.get(ips.size() - 1));
 		} catch (NullPointerException e1) {
 			ips = new ArrayList<String>();
 			System.err.println("Error loading previous IPs from config - loading defaults (empty).");
 		}
 		this.IPChoice.getItems().addAll(ips);
 		this.IPChoice.setEditable(true);
-		this.IPChoice.setValue("Testing goddammit");
 		
 		this.IPLabel = new Label("Please enter a host IP address and port: ");
 

@@ -1,8 +1,13 @@
+<<<<<<< HEAD
 **/*.class
 **/.metadata
 **/.recommenders
-**/bin
+ChatClient/bin/
+ChatClient/build/
+ChatClient/build.fxbuild
 **.classpath
-**/*.project
+ChatClient/.project
+ChatServer/.project
 **/*.properties
 **/*.log
+*~

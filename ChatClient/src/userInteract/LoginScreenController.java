@@ -78,6 +78,7 @@ public class LoginScreenController {
 		}
 		this.IPChoice.getItems().addAll(ips);
 		this.IPChoice.setEditable(true);
+		this.IPChoice.setValue("Testing goddammit");
 		
 		this.IPLabel = new Label("Please enter a host IP address and port: ");
 
@@ -236,9 +237,7 @@ public class LoginScreenController {
 		this.loginButton = new Button();
 		this.loginButton.setText("Log in");
 		this.loginButton.addEventHandler(ActionEvent.ACTION, e -> {
-			System.err.println("This is supposedly the getIPChoice value return for line 239:" + this.getIPChoice());
-			if (this.getIPChoice().contains(" ") || this.getIPChoice().equals("")
-					|| this.getIPChoice().equals(null)) {
+			if (this.getIPChoice().equals(null) || this.getIPChoice().contains(" ") || this.getIPChoice().equals("")) {
 				Popups.startInfoDlg("Invalid IP", "Please enter a valid host IP address.");
 			} else if (!(this.getIPChoice().contains(" ") || this.getIPChoice().equals(""))) {
 				try {
@@ -352,7 +351,7 @@ public class LoginScreenController {
 	}
 
 	public String getIPChoice() {
-		return IPChoice.getValue();
+		return this.IPChoice.getEditor().getText();
 	}
 
 	public void setIPChoice(ComboBox<String> iPChoice) {

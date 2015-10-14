@@ -328,7 +328,7 @@ public class FileHandler {
 					properties.setProperty("prev_ips", properties.getProperty("prev_ips"));
 				}
 			} catch (Exception e) {
-				System.out.println("Supposed storing IP: " + properties.getProperty("prev_ips") + " and " + ls.getIPChoice());
+				System.err.println("Error saving last IP!");
 			}
 			
 			OutputStream writer = new FileOutputStream(configFile);

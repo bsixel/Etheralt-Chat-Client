@@ -7,12 +7,10 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 
-import application.ChatClient;
 import client.Client;
 import javafx.application.Platform;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
-import javafx.stage.Stage;
 import userInteract.ChatText;
 import userInteract.MainScreenController;
 import userInteract.Popups;

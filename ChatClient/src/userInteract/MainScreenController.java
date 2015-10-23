@@ -414,7 +414,7 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 		try {
 			this.getClient().getClientSendingData().writeUTF("*![System] " + SystemInfo.getDate() + ": " + this.getClient().getClientName() + " has disconnected.");
 			FileHandler.writeToChatLog("[System] " + SystemInfo.getDate() + ": " + this.getClient().getClientName() + " has disconnected.");
-			this.getClient().getClientSendingData().writeUTF("*!kick " + this.client.getClientName() + " 'Client disconnected.'");
+			this.getClient().getClientSendingData().writeUTF("*!disconnect " + this.client.getClientName() + " 'Client disconnected.'");
 			System.out.println("Yeah here.");
 			getClient().setRunning(false);
 			this.getClientThread().interrupt();

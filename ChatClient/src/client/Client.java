@@ -123,7 +123,7 @@ public class Client {
 			
 			if (input != null && !input.equalsIgnoreCase(previous)) {
 				
-				if (input.startsWith("*![System")) {
+				if (input.startsWith("*![System") || input.startsWith("*![Server")) {
 					String phrase = input.trim().substring(input.trim().indexOf("!") + 1);
 					ls.getMainController().addMessage(phrase, "blue", "black");
 

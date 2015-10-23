@@ -322,10 +322,12 @@ public class FileHandler {
 			properties.setProperty("last_IP", ls.getIPChoice());
 			properties.setProperty("last_port", ls.getPortField().getText());
 			try {
-				if (!properties.getProperty("prev_ips").contains(ls.getIPChoice())) {
-					properties.setProperty("prev_ips", properties.getProperty("prev_ips") + "," +ls.getIPChoice());
+				String previps = getProperty("prev_ips");
+				System.out.println("PREVIPS: " + previps);
+				if (!previps.contains(ls.getIPChoice())) {
+					properties.setProperty("prev_ips", previps + "," +ls.getIPChoice());
 				} else {
-					properties.setProperty("prev_ips", properties.getProperty("prev_ips"));
+					properties.setProperty("prev_ips", previps);
 				}
 			} catch (Exception e) {
 				properties.setProperty("prev_ips", ls.getIPChoice());

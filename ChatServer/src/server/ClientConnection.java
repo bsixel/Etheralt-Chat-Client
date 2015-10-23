@@ -2,6 +2,7 @@ package server;
 
 import static tools.FileHandler.chatPrint;
 import static tools.FileHandler.debugPrint;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -9,6 +10,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
+
 import tools.CommandParser;
 import tools.SystemInfo;
 
@@ -41,6 +43,7 @@ public class ClientConnection {
 	private DataInputStream picAcceptedData;
 	private DataOutputStream picSendingData;
 	private Server server;
+	private User user;
 
 	//Numbers
 	int clientID;
@@ -72,9 +75,8 @@ public class ClientConnection {
 	}
 
 	/**
-	 * Starts the actual connection. Manages send/receive of data of multilpe kinds, including
+	 * Starts the actual connection. Manages send/receive of data of multiple kinds, including
 	 * chat, file transfer, and eventually audio.
-	 * @param printOut
 	 */
 	public void startConnection() {
 
@@ -102,7 +104,7 @@ public class ClientConnection {
 				String[] args = input.split(" ");
 				if (input.startsWith("*!givename:")) {
 					this.setClientName(args[1]);
-					System.out.println("Assigning name '" + args[1] + "'");
+					debugPrint("Assigning name '" + args[1] + "'");
 					synchronized (this.getServer().getUsers()) {
 						if (this.getClientName() == null || this.getClientName() == "") {
 							continue;
@@ -160,7 +162,7 @@ public class ClientConnection {
 						this.voiceSendingData.write(buffer, 0, count);
 					} catch (Exception e1) {
 						if (!this.running) {
-							System.err.println("Lost audio connection to client!");
+							debugPrint("Lost audio connection to client!");
 						}
 						break;
 					}
@@ -219,14 +221,14 @@ public class ClientConnection {
 								CommandParser.parse(received, e.getCC(), this);
 							} catch (Exception ex) {
 								debugPrint("Error while parsing command: " + received);
-								debugPrint(ex.getStackTrace()[2].toString());
+								debugPrint(ex.getStackTrace()[0].toString());
 							}
 						} else {
 							try {
 								e.getCC().getSendingData().writeUTF("[" + this.getClientName() + "] " + SystemInfo.getDate() +  ": " + received);
 							} catch (Exception ex) {
 								debugPrint("Error while sending message to clients!");
-								debugPrint(ex.getStackTrace()[2].toString());
+								debugPrint(ex.getStackTrace()[0].toString());
 							}
 
 						}
@@ -256,12 +258,12 @@ public class ClientConnection {
             			u.getCC().getSendingData().writeUTF("*![System] " + SystemInfo.getDate() + ": " + getClientName() + " has disconnected.");
             		} catch (Exception e1) {
             			debugPrint("Error sending disconnect message for " + this.clientName + ".");
-            			debugPrint(e1.getStackTrace()[2].toString());
+            			debugPrint(e1.getStackTrace()[0].toString());
             		}
             	}
             });
 		} catch (IOException e1) {
-			debugPrint(e1.getStackTrace()[1].toString());
+			debugPrint(e1.getStackTrace()[0].toString());
 			this.server.killUser(clientName, "Lost connection to client.");
 		} finally {
 			/**
@@ -284,13 +286,11 @@ public class ClientConnection {
 
 	}
 
-	int dlcount;
-
 	/**
 	 * Thread started when a client requests a download/file transfer.
-	 * @param input The input from the remote client containing destination and file length.
+	 * @param input The string input from the remote client containing destination and file length.
 	 * @return A thread used for receiving/sending data for file transfers.
-	 * @throws Exception
+	 * @throws Exception if there is a connection problem between the sending and receiving clients.
 	 */
 	public Thread genDLThread(String input) throws Exception {
 		Thread dlThread = new Thread(() -> {
@@ -300,6 +300,7 @@ public class ClientConnection {
 			try {
 				long total = 0;
 				while (total != length) {
+					int dlcount;
 					dlcount = this.DLAcceptedData.read(buffer, 0, 8192);
 					total += dlcount;
 					getServer().getUsers().stream().map(u -> u.getCC()).forEach(e -> {
@@ -308,7 +309,7 @@ public class ClientConnection {
 								e.DLSendingData.write(buffer, 0, dlcount);
 							} catch (Exception e1) {
 								debugPrint("Error sending file data from " + this.clientName + " to " + args[2] + ".");
-								debugPrint(e1.getStackTrace()[2].toString());
+								debugPrint(e1.getStackTrace()[0].toString());
 							}
 						}
 					});
@@ -316,19 +317,19 @@ public class ClientConnection {
 
 			} catch (Exception e1) {
 				debugPrint("Error sending file data from " + this.clientName + " to " + args[2] + ".");
-				debugPrint(e1.getStackTrace()[2].toString());
+				debugPrint(e1.getStackTrace()[0].toString());
+				Thread.currentThread().interrupt();
 			}
 			Thread.currentThread().interrupt();
 		});
 		return dlThread;
 	}
 
-	int piccount;
 	/**
 	 * Thread started when a client requests an image download/transfer.
-	 * @param input
-	 * @return
-	 * @throws Exception
+	 * @param input The string input from the remote client containing destination and file length.
+	 * @return A thread used for receiving/sending data for image transfers.
+	 * @throws Exception if there is a connection problem between the sending and receiving clients.
 	 */
 	public Thread genPicThread(String input) throws Exception {
 		Thread picThread = new Thread(() -> {
@@ -338,6 +339,7 @@ public class ClientConnection {
 			try {
 				long total = 0;
 				while (total != length) {
+					int piccount;
 					piccount = this.picAcceptedData.read(buffer, 0, 8192);
 					total += piccount;
 					getServer().getUsers().stream().map(u -> u.getCC()).forEach(e -> {
@@ -346,7 +348,7 @@ public class ClientConnection {
 								e.picSendingData.write(buffer, 0, piccount);
 							} catch (Exception e1) {
 								debugPrint("Error sending image data from " + this.clientName + " to " + args[2] + ".");
-								debugPrint(e1.getStackTrace()[2].toString());
+								debugPrint(e1.getStackTrace()[0].toString());
 							}
 						}
 					});
@@ -354,7 +356,8 @@ public class ClientConnection {
 
 			} catch (Exception e1) {
 				debugPrint("Error sending image data from " + this.clientName + " to " + args[2] + ".");
-				debugPrint(e1.getStackTrace()[2].toString());
+				debugPrint(e1.getStackTrace()[0].toString());
+				Thread.currentThread().interrupt();
 			}
 			Thread.currentThread().interrupt();
 		});
@@ -363,7 +366,7 @@ public class ClientConnection {
 
 	/** Method used to initiate file sending.
 	 * Uses the input from the remote client to determine file size and destination.
-	 * @param input
+	 * @param input The input from the remote client containing destination and file length.
 	 */
 	public void sendFile(String input) {
 
@@ -371,7 +374,7 @@ public class ClientConnection {
 		try {
 			dlThread = genDLThread(input);
 		} catch (Exception e1) {
-			e1.printStackTrace();
+			debugPrint(e1.getStackTrace()[0].toString());
 		}
 		dlThread.setDaemon(true);
 		dlThread.start();
@@ -380,7 +383,7 @@ public class ClientConnection {
 
 	/** Method used to initiate image sending.
 	 * Uses the input from the remote client to determine file size and destination.
-	 * @param input
+	 * @param input The input from the remote client containing destination and file length.
 	 */
 	public void sendImg(String input) {
 
@@ -388,75 +391,162 @@ public class ClientConnection {
 		try {
 			picThread = genPicThread(input);
 		} catch (Exception e1) {
-			e1.printStackTrace();
+			debugPrint(e1.getStackTrace()[0].toString());
 		}
 		picThread.setDaemon(true);
 		picThread.start();
 
 	}
 
-	/**
+	/*
 	 * A whole bunch of getters and setters.
 	 * Could probably cull some unused ones.
+	 */
+	
+	/**
+	 * Setter for the client name.
+	 * @param name New name for the client.
 	 */
 	public void setClientName(String name) {
 		this.clientName = name;
 	}
 
+	/**
+	 * Getter for the client's name.
+	 * @return The name of the client.
+	 */
 	public String getClientName() {
 		return clientName;
 	}
 
+	/**
+	 * Getter for the standard sending data of the client.
+	 * @return The standard sending data of the client.
+	 */
 	public DataOutputStream getSendingData() {
 		return sendingData;
 	}
 
+	/**
+	 * Getter for the server itself.
+	 * @return The server to which this client is connected.
+	 */
 	public Server getServer() {
 		return server;
 	}
 
+	/**
+	 * Getter for the standard socket.
+	 * @return The standard text socket.
+	 */
 	public Socket getSocket() {
 		return textSocket;
 	}
 
+	/**
+	 * Getter for the standard receiving text data.
+	 * @return The standard stream for received text data.
+	 */
 	public DataInputStream getAcceptedData() {
 		return acceptedData;
 	}
 
+	/**
+	 * Getter for the standard file transfer socket.
+	 * @return The standard file transfer socket.
+	 */
 	public Socket getDLSocket() {
 		return DLSocket;
 	}
 
+	/**
+	 * Getter for the standard input stream of file transfer data.
+	 * @return The standard input stream for file transfer data.
+	 */
 	public DataInputStream getDLAcceptedData() {
 		return DLAcceptedData;
 	}
 
+	/**
+	 * Getter for the standard stream of outgoing file transfer data.
+	 * @return The standard stream of outgoing file transfer data.
+	 */
 	public DataOutputStream getDLSendingData() {
 		return DLSendingData;
 	}
 
+	/**
+	 * Getter for the standard voice socket.
+	 * @return The standard voice data socket.
+	 */
 	public Socket getVoiceSocket() {
 		return this.voiceSocket;
 	}
 
+	/**
+	 * Getter for the standard incoming voice data.
+	 * @return The standard incoming voice data.
+	 */
 	public DataInputStream getVoiceAcceptedData() {
 		return voiceAcceptedData;
 	}
 
+	/**
+	 * Getter for the standard stream of outgoing voice data.
+	 * @return The standard stream of outgoing voice data.
+	 */
 	public DataOutputStream getVoiceSendingData() {
 		return voiceSendingData;
 	}
 
+	/**
+	 * Getter for the unique client ID associated with this client.
+	 * @return A unique string of numbers and letter generated by Java's standard random UUID generator.
+	 */
 	public int getClientID() {
 		return clientID;
 	}
 
+	/**
+	 * Setter for this client's unique ID.
+	 * @param clientID The new ID to which this client's ID will be set.
+	 */
 	public void setClientID(int clientID) {
 		this.clientID = clientID;
 	}
 
+	/**
+	 * Sets whether this client is currently running and maintaining a connection.
+	 * @param b Boolean value: true for running, false for not.
+	 */
 	public void setRunning(boolean b) {
 		this.running = b;
+	}
+	
+	/**
+	 * Gets the User object representative of this connection's remote user.
+	 * @return A user object representing the remote user.
+	 */
+	public User getUser() {
+		return this.user;
+	}
+	
+	/**
+	 * Sets the user for this connection.
+	 * @param user The user being set.
+	 */
+	public void setUser(User user) {
+		this.user = user;
+	}
+	
+	/**
+	 * Returns a string representing the client connection - in this case, it is simply the client's name.
+	 * @return The name of the client.
+	 * @Override
+	 */
+	@Override
+	public String toString() {
+		return this.clientName;
 	}
 
 }

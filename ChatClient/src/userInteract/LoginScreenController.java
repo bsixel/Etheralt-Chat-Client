@@ -3,6 +3,7 @@ package userInteract;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -58,6 +59,17 @@ public class LoginScreenController {
 	private Label IPLabel;
 	private TextField portField;
 
+
+	public LoginScreenController(MainScreenController mainController, VBox mainScreenLayout, Stage window, Scene nextScene, WindowController windowController) {
+
+		this.setMainController(mainController);
+		this.windowController = windowController;
+		this.layout = mainScreenLayout;
+		this.window = window;
+		this.chatScreen = nextScene;
+
+	}
+	
 	private void initUsernameLabel() {
 
 		this.usernameLabel = new Label(loginString);
@@ -72,7 +84,8 @@ public class LoginScreenController {
 		List<String> ips;
 		try {
 			ips = Arrays.asList(FileHandler.getProperty("prev_ips").split(","));
-			this.IPChoice.setValue(ips.get(ips.size() - 1));
+			Collections.reverse(ips);
+			this.IPChoice.setValue(ips.get(0));
 		} catch (NullPointerException e1) {
 			ips = new ArrayList<String>();
 			System.err.println("Error loading previous IPs from config - loading defaults (empty).");
@@ -111,8 +124,11 @@ public class LoginScreenController {
 		if (prevPort == null) {
 			FileHandler.setProperty("last_port", "");
 		} else if (prevPort != null) {
+			this.IPChoice.getEditor().setText(ips.get(0));
 			this.getPortField().setText(prevPort);
 		}
+		
+		
 
 		this.getPortField().setMaxSize(50, 10);
 		this.getPortField().setPrefSize(50, 10);
@@ -150,16 +166,6 @@ public class LoginScreenController {
 				}
 			}
 		});
-
-	}
-
-	public LoginScreenController(MainScreenController mainController, VBox mainScreenLayout, Stage window, Scene nextScene, WindowController windowController) {
-
-		this.setMainController(mainController);
-		this.windowController = windowController;
-		this.layout = mainScreenLayout;
-		this.window = window;
-		this.chatScreen = nextScene;
 
 	}
 

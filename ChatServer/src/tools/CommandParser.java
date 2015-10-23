@@ -1,10 +1,16 @@
 package tools;
 
+import static tools.FileHandler.debugPrint;
+
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URL;
 import java.util.stream.Collectors;
 
 import server.ClientConnection;
 import server.Server;
+import server.User;
 
 /**
  * 
@@ -14,12 +20,14 @@ import server.Server;
 
 public class CommandParser {
 	
+	private static final String initStr = "Connected users:";
+	
 	/**
 	 * Gets the nth occurrence of a string c in another string str.
-	 * @param str
-	 * @param c
-	 * @param n
-	 * @return
+	 * @param str The string we are searching within.
+	 * @param c The string for which we need the nth place of occurrence.
+	 * @param n The number representing which occurrence we are looking for.
+	 * @return An int representing the position at which the string occurs for the nth time.
 	 */
 	public static int nthOccurrence(String str, String c, int n) {
 	    int pos = str.indexOf(c, 0);
@@ -30,23 +38,34 @@ public class CommandParser {
 	
 	/**
 	 * Parses commands coming from the server itself.
-	 * @param input
-	 * @param server
+	 * @param input The string which we are parsing.
+	 * @param server The server which we will be working with/manipulating using the commands.
+	 * @throws Emergency exception. In the server launcher we provide a catch to stop this from completely breaking the server.
 	 */
-	public static void parse(String input, Server server) {
+	public static void parse(String input, Server server) throws Exception {
 		String[] args = input.split(" ");
 		String command = args[0];
 		
-		if (command.equalsIgnoreCase("/addAdmin")) {
+		if (command.equalsIgnoreCase("/admin")) {
 			server.getUsers().forEach(u -> {
 				if (u.getDisplayName().equalsIgnoreCase(args[1])) {
 					try {
 						u.getCC().getSendingData().writeUTF("*!admind");
+						String currAdmins = FileHandler.getProperty("admins");
+						if (currAdmins == null || currAdmins.equals("")) {
+							currAdmins = "";
+							FileHandler.setProperty("admins", u.getID());
+							debugPrint("Added " + args[1] + " as admin!");
+							u.setAdmin(true);
+							return;
+						}
+						String newAdmins = String.format("%1$s,%2$s", currAdmins, u.getID());
+						FileHandler.setProperty("admins", newAdmins);
 						System.out.println("Added " + args[1] + " as admin!");
 						u.setAdmin(true);
 					} catch (Exception e) {
-						System.out.println("Failed to add " + args[1] + " as admin!");
-						FileHandler.writeToErrorLog(e.getStackTrace()[0].toString());
+						debugPrint("Failed to add " + args[1] + " as admin!");
+						debugPrint(e.getStackTrace()[0].toString());
 					}
 				}
 			});
@@ -58,24 +77,68 @@ public class CommandParser {
 		} else if (command.equalsIgnoreCase("/password")) {
 			System.out.println("Password: '" + server.getPassword() + "'");
 		} else if (command.equalsIgnoreCase("/stop")) {
-			System.out.println("Shutting down server.");
+			debugPrint("Shutting down server.");
 			System.exit(0);
 		} else if (command.equalsIgnoreCase("/kick")) {
 			try {
 				server.killUser(args[1], input.split("'")[1]);
 			} catch (Exception e) {
-				e.printStackTrace();
-				System.err.println("Error! Input = " + input);
+				debugPrint(e.getStackTrace()[0].toString());
+				debugPrint("Error! Input = " + input);
+			}
+		} else if (command.equalsIgnoreCase("/IP")) {
+			try {
+				System.out.println(new BufferedReader(new InputStreamReader(new URL("http://agentgatech.appspot.com").openStream())).readLine());
+			} catch (Exception e) {
+				FileHandler.debugPrint("Unable to get current IP!");
+			}
+		} else if (command.equalsIgnoreCase("/updateusers")) {
+			String users = buildUsers(server);
+			debugPrint("Updating connected users for clients.");
+	        server.getUsers().forEach(u -> {
+	        	try {
+					u.getCC().getSendingData().writeUTF("/updateusers " + users);
+					throw new Exception();
+				} catch (Exception e) {
+					debugPrint("Error notifying of new connection: " + e.getStackTrace()[0].toString());
+				}
+	        });
+		} else if (command.equalsIgnoreCase("/port")) {
+			System.out.println(server.getPortStart());
+		} else if (command.equalsIgnoreCase("/admins")) {
+			String admins = FileHandler.getProperty("admins");
+			if (admins == null || admins.equals("")) {
+				System.out.println("No registered admins.");
+			} else {
+				System.out.printf("Registered admins: %1$s%n", admins);
 			}
 		}
+		
 		System.out.print("> ");
 	}
 	
 	/**
+	 * Build a string containing connected users.
+	 * @param server The server whose users are being organized.
+	 * @return A string composed of 'Connected users:' plus the connected users with commas in between.
+	 */
+	public static String buildUsers(Server server) {
+		String str = initStr;
+        for (User u:server.getUsers()) {
+        	if (str.split(" ").length < 3) {
+        		str += " " + u.getDisplayName();
+        	} else {
+        		str += ", " + u.getDisplayName();
+        	}
+        };
+        return str;
+	}
+	
+	/**
 	 * Parses commands coming in from remote clients and redistributes or enacts them.
-	 * @param input
-	 * @param client
-	 * @param selfClient
+	 * @param input The command and arguments for the command which are being parsed.
+	 * @param client The client which is receiving the command's effects.
+	 * @param selfClient The client sending the command.
 	 */
 	public static void parse(String input, ClientConnection client, ClientConnection selfClient) {
 
@@ -88,15 +151,7 @@ public class CommandParser {
 					System.out.println("Message sent from " + args[1] + " to " + args[2]);
 					client.getSendingData().writeUTF("From " + "[" + args[1] + " ] " + SystemInfo.getDate() +  ": " + input.substring(nthOccurrence(input, " ", 2)));
 				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		} else if (command.equalsIgnoreCase("*!open:")) {
-			if (!args[1].equalsIgnoreCase("Morthaden") && (client.getClientName().equalsIgnoreCase(args[1]) || args[1].equals("all"))) {
-				try {
-					client.getSendingData().writeUTF(input);
-				} catch (IOException e) {
-					e.printStackTrace();
+					debugPrint(e.getStackTrace()[0].toString());
 				}
 			}
 		} else if (command.equalsIgnoreCase("*!link:")) {
@@ -104,7 +159,7 @@ public class CommandParser {
 				try {
 					client.getSendingData().writeUTF("/linkopen" + input.substring(input.indexOf(" ")));
 				} catch (IOException e) {
-					e.printStackTrace();
+					debugPrint(e.getStackTrace()[0].toString());
 				}
 			}
 		} else if (command.equalsIgnoreCase("*!users:")) {
@@ -112,17 +167,17 @@ public class CommandParser {
 				try {
 					client.getSendingData().writeUTF("Connected users: " + client.getServer().getUsers().stream().map(e -> e.getCC().getClientName()).collect(Collectors.toList()).toString());
 				} catch (IOException e) {
-					e.printStackTrace();
+					debugPrint(e.getStackTrace()[0].toString());
 				}
 			}
 		} else if (command.equalsIgnoreCase("*!sendfile:")) {
 			if (client.getClientName().equalsIgnoreCase(args[2]) || args[2].equals("all")) {
 				try {
-					System.out.println("Received a *!sendfile, sending a /getfile");
+					debugPrint("Received a *!sendfile, sending a /getfile");
 					client.getSendingData().writeUTF("/getfile" + input.substring(input.indexOf(" ")));
 					selfClient.sendFile(input);
 				} catch (IOException e) {
-					e.printStackTrace();
+					debugPrint(e.getStackTrace()[0].toString());
 				}
 			}
 		} else if (command.equalsIgnoreCase("*!declineDL:")) {
@@ -130,17 +185,17 @@ public class CommandParser {
 				try {
 					client.getSendingData().writeUTF("/declineDL" + input.substring(input.indexOf(" ")));
 				} catch (IOException e) {
-					e.printStackTrace();
+					debugPrint(e.getStackTrace()[0].toString());
 				}
 			}
 		} else if (command.equalsIgnoreCase("*!sendimg:")) {
 			if (client.getClientName().equalsIgnoreCase(args[2]) || args[2].equals("all")) {
 				try {
-					System.out.println("Received a *!sendimg, sending a /getimg");
+					debugPrint("Received a *!sendimg, sending a /getimg");
 					client.getSendingData().writeUTF("/getimg" + input.substring(input.indexOf(" ")));
 					selfClient.sendImg(input);
 				} catch (IOException e) {
-					e.printStackTrace();
+					debugPrint(e.getStackTrace()[0].toString());
 				}
 			}
 		} else if (command.equalsIgnoreCase("*!declineimg:")) {
@@ -148,7 +203,7 @@ public class CommandParser {
 				try {
 					client.getSendingData().writeUTF("/declineimg" + input.substring(input.indexOf(" ")));
 				} catch (IOException e) {
-					e.printStackTrace();
+					debugPrint(e.getStackTrace()[0].toString());
 				}
 			}
 		} else if (command.equalsIgnoreCase("*!youtube")) {
@@ -156,10 +211,12 @@ public class CommandParser {
 				try {
 					client.getSendingData().writeUTF("/youtubeplay" + input.substring(input.indexOf(" ")));
 				} catch (IOException e) {
-					e.printStackTrace();
+					debugPrint(e.getStackTrace()[0].toString());
 				}
 			}
-		} else if (command.equalsIgnoreCase("*!kick")) {
+		} else if (command.equalsIgnoreCase("*!kick") && (selfClient.getUser().isAdmin() || FileHandler.getProperty("admins").contains(selfClient.getUser().getID()))) {
+			client.getServer().killUser(args[1], input.split("'")[1]);
+		} else if (command.equalsIgnoreCase("*!disconnect")) {
 			client.getServer().killUser(args[1], input.split("'")[1]);
 		}
 	}

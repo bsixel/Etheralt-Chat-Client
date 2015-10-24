@@ -40,6 +40,16 @@ public class FileHandler {
 	public static final String picturesPath = System.getProperty("user.home") + "/Documents/Etheralt Chat Client/Pictures";
 	public static final String configPath = System.getProperty("user.home") + "/Documents/Etheralt Chat Client/chat_client.properties";
 	
+	public static void debugPrint(String msg) {
+		System.out.println(msg);
+		writeToErrorLog(SystemInfo.getFullDate() + ": " + msg);
+	}
+	
+	public static void chatPrint(String msg) {
+		System.out.println(SystemInfo.getFullDate() + ": " + msg);
+		writeToErrorLog(SystemInfo.getFullDate() + ": " + msg);
+	}
+	
 	public static void generateConfigFile() {
 
 		"".contains("blah");

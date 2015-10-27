@@ -2,7 +2,6 @@ package userInteract;
 
 import java.awt.Desktop;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -10,6 +9,9 @@ import java.util.ArrayList;
 import application.ChatClient;
 import application.WindowController;
 import client.Client;
+import javafx.animation.Animation;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -23,14 +25,13 @@ import javafx.scene.control.ScrollPane.ScrollBarPolicy;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import tools.AudioHandler;
 import tools.CommandParser;
 import tools.FileHandler;
@@ -54,6 +55,7 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 
 	//Booleans
 	private boolean isHosting;
+	private boolean isSpinning = false;
 
 	//Strings
 	private String username = "";
@@ -79,6 +81,7 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 	private VBox images = new VBox(10);
 	private ScrollPane imageScroll = new ScrollPane(getImages());
 	private HBox columnsContainer = new HBox();
+	private Scene currScene;
 
 	public MainScreenController(GridPane layout, Stage window, Scene currentScene, Scene nextScene, WindowController windowController) throws URISyntaxException, IOException {
 
@@ -87,6 +90,7 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 		this.layout = layout;
 		this.window = window;
 		FileHandler.readLog(this.getChatBox());
+		this.currScene = currentScene;
 
 	}
 
@@ -181,6 +185,12 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 		this.buttonBox.getChildren().addAll(this.logoutButton, this.scrollButton, this.folderButton, this.scienceButton, this.tb, this.saveAudio, this.sendButton);
 		this.firstColumn.getChildren().addAll(this.usernameLabel, this.usersArea, this.chatView, this.chatField);
 		
+		this.currScene.setOnKeyPressed(k -> {
+			if (k.isControlDown() && k.getCode().equals(KeyCode.ESCAPE)) {
+				this.isSpinning = false;
+			}
+		});
+		
 	}
 	
 	private void initToggle() {
@@ -203,20 +213,18 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 	
 	private void initExtraButtons() {
 		this.scienceButton.setId("science");
+		Timeline timeline = new Timeline(new KeyFrame(Duration.millis(100), a -> {
+			if (this.isSpinning) {
+				this.layout.setRotate(this.layout.getRotate() + 10);
+			} else {
+				this.layout.setRotate(0);
+			}
+		}));
+		timeline.setCycleCount(Animation.INDEFINITE);
+		timeline.play();
 		this.scienceButton.addEventHandler(ActionEvent.ACTION, e -> {
 			try {
-				File file = Popups.startPictureOpener("Select a file to do absolutely nothing with!");
-				System.out.println(file.getName());
-				if (file != null) {
-					Image img = new Image(new FileInputStream(file));
-					ImageView imgview = new ImageView(img);
-					imgview.setOnMouseClicked(click -> {
-						if (click.getClickCount() == 2) {
-							Popups.startImageViewer(file.getName(), img);
-						}
-					});
-					this.getImages().getChildren().add(imgview);
-				}
+				this.isSpinning = !this.isSpinning;
 			} catch (Exception ex) {
 				System.out.println("Well, that didn't work. Stop trying to break things.");
 				ex.printStackTrace();

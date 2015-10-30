@@ -251,6 +251,7 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 
 		if (!msg.startsWith("*!") && !msg.startsWith("/")) {
 			Platform.runLater(() -> {
+				this.window.toFront();
 				this.getChatBox().addText(new ChatText(msg, color, bgColor));
 				scrollToBottom();
 			});

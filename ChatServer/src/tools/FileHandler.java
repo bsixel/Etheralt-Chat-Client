@@ -31,8 +31,8 @@ public class FileHandler {
 	 */
 	public static void debugPrint(String msg) {
 		String fnlMsg = SystemInfo.getFullDate() + ": " + msg;
-		System.out.println(fnlMsg);
-		System.out.print("> ");
+		System.err.println(fnlMsg);
+		System.err.print("> ");
 		writeToErrorLog(fnlMsg);
 	}
 	

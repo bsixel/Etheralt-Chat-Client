@@ -15,9 +15,26 @@ import userInteract.ChatText;
 import userInteract.MainScreenController;
 import userInteract.Popups;
 
+/**
+ * 
+ * @author Ben Sixel
+ *   Copyright 2015 Benjamin Sixel
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+ */
+
 public class CommandParser {
 	
-	private static Desktop desktop = Desktop.getDesktop();
 	
 	public static int nthOccurrence(String str, String c, int n) {
 	    int pos = str.indexOf(c, 0);
@@ -27,7 +44,7 @@ public class CommandParser {
 	}
 	
 	public static void parse(String input, MainScreenController sc, ArrayList<String> prevInput) {
-		
+		Desktop desktop = Desktop.getDesktop();
 		String[] args = input.split(" ");
 		String command = args[0];
 		
@@ -46,7 +63,7 @@ public class CommandParser {
 				sc.addMessage("To " + System.lineSeparator() + "[" + args[1] + "] " + SystemInfo.getDate() + ": " + message.substring(message.indexOf(" ") + 1), "green", "black");
 				sc.getChatField().clear();
 			} catch (Exception e) {
-				e.printStackTrace();
+				FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
 			}
 		} else if (command.equalsIgnoreCase("/clear")) {
 			sc.getChatBox().getChildren().clear();
@@ -64,14 +81,14 @@ public class CommandParser {
 				sc.getClient().getClientSendingData().writeUTF("*!link: " + args[1] + input.substring(nthOccurrence(input, " ", 1)));
 				sc.getChatField().clear();
 			} catch (IOException e) {
-				e.printStackTrace();
+				FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
 			}
 		} else if (command.equalsIgnoreCase("/users")) {
 			try {
 				sc.getClient().getClientSendingData().writeUTF("*!users: " + sc.getClient().getClientName());
 				sc.getChatField().clear();
 			} catch (IOException e) {
-				e.printStackTrace();
+				FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
 			}
 		} else if (command.equalsIgnoreCase("/sendfile")) {
 			sendFile(input, sc);
@@ -89,7 +106,7 @@ public class CommandParser {
 					try {
 						sc.getClient().getClientSendingData().writeUTF("*!declineDL: " + args[1] + " " + args[3]);
 					} catch (IOException e) {
-						e.printStackTrace();
+						FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
 					}
 				}
 			}
@@ -110,7 +127,7 @@ public class CommandParser {
 				
 				sc.getChatField().clear();
 			} catch (Exception e) {
-				e.printStackTrace();
+				FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
 			}
 		} else if (command.equalsIgnoreCase("/getimg")) {
 			if (sc.getClient().getClientName().equalsIgnoreCase(args[2]) || args[2].equals("all")) {
@@ -130,7 +147,7 @@ public class CommandParser {
 			try {
 				sc.getClient().getClientSendingData().writeUTF("*!youtube" + input.substring(input.indexOf(" ")));
 			} catch (IOException e) {
-				e.printStackTrace();
+				FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
 			}
 			sc.getChatField().clear();
 		} else if (command.equalsIgnoreCase("/youtubeplay")) {
@@ -143,7 +160,7 @@ public class CommandParser {
 				try {
 					desktop.browse(new URI(input.split(" ", 3)[2]));
 				} catch (Exception e) {
-					e.printStackTrace();
+					FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
 				}
 			} else {
 				WebView webview = new WebView();
@@ -153,7 +170,7 @@ public class CommandParser {
 						try {
 							desktop.browse(new URI(input.split(" ", 3)[2]));
 						} catch (Exception e) {
-							e.printStackTrace();
+							FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
 						}
 					}
 				});
@@ -173,7 +190,7 @@ public class CommandParser {
 					try {
 						desktop.browse(new URI("https://www.google.com"));
 					} catch (Exception e) {
-						e.printStackTrace();
+						FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
 					}
 				}
 			});
@@ -198,7 +215,7 @@ public class CommandParser {
 			try {
 				sc.getClient().getClientSendingData().writeUTF("*!kick " + args[1] + " " + input.split("'")[1]);
 			} catch (IOException e) {
-				e.printStackTrace();
+				FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
 			}
 		} else if (command.equalsIgnoreCase("/kicked")) {
 			sc.logout();
@@ -208,7 +225,7 @@ public class CommandParser {
 	}
 	
 public static void parseMSC(String input, MainScreenController sc, ArrayList<String> prevInput) {
-		
+	Desktop desktop = Desktop.getDesktop();
 		String[] args = input.split(" ");
 		String command = args[0];
 		
@@ -227,7 +244,7 @@ public static void parseMSC(String input, MainScreenController sc, ArrayList<Str
 				sc.addMessage("To " + System.lineSeparator() + "[" + args[1] + "] " + SystemInfo.getDate() + ": " + message.substring(message.indexOf(" ") + 1), "green", "black");
 				sc.getChatField().clear();
 			} catch (Exception e) {
-				e.printStackTrace();
+				FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
 			}
 		} else if (command.equalsIgnoreCase("/clear")) {
 			sc.getChatBox().getChildren().clear();
@@ -245,14 +262,14 @@ public static void parseMSC(String input, MainScreenController sc, ArrayList<Str
 				sc.getClient().getClientSendingData().writeUTF("*!link: " + args[1] + input.substring(nthOccurrence(input, " ", 1)));
 				sc.getChatField().clear();
 			} catch (IOException e) {
-				e.printStackTrace();
+				FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
 			}
 		} else if (command.equalsIgnoreCase("/users")) {
 			try {
 				sc.getClient().getClientSendingData().writeUTF("*!users: " + sc.getClient().getClientName());
 				sc.getChatField().clear();
 			} catch (IOException e) {
-				e.printStackTrace();
+				FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
 			}
 		} else if (command.equalsIgnoreCase("/sendfile")) {
 			sendFile(input, sc);
@@ -270,7 +287,7 @@ public static void parseMSC(String input, MainScreenController sc, ArrayList<Str
 					try {
 						sc.getClient().getClientSendingData().writeUTF("*!declineDL: " + args[1] + " " + args[3]);
 					} catch (IOException e) {
-						e.printStackTrace();
+						FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
 					}
 				}
 			}
@@ -285,13 +302,13 @@ public static void parseMSC(String input, MainScreenController sc, ArrayList<Str
 				
 				sc.getChatField().clear();
 			} catch (Exception e) {
-				e.printStackTrace();
+				FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
 			}
 		} else if (command.equalsIgnoreCase("/youtube")) {
 			try {
 				sc.getClient().getClientSendingData().writeUTF("*!youtube" + input.substring(input.indexOf(" ")));
 			} catch (IOException e) {
-				e.printStackTrace();
+				FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
 			}
 			sc.getChatField().clear();
 		} else if (command.equalsIgnoreCase("/clearmedia")) {
@@ -305,7 +322,7 @@ public static void parseMSC(String input, MainScreenController sc, ArrayList<Str
 					try {
 						desktop.browse(new URI("https://www.google.com"));
 					} catch (Exception e) {
-						e.printStackTrace();
+						FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
 					}
 				}
 			});
@@ -328,7 +345,7 @@ public static void parseMSC(String input, MainScreenController sc, ArrayList<Str
 			try {
 				sc.getClient().getClientSendingData().writeUTF("*!kick " + args[1] + " '" + input.split("'")[1] + "'");
 			} catch (IOException e) {
-				e.printStackTrace();
+				FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
 			}
 		}
 		
@@ -346,12 +363,12 @@ public static void parseMSC(String input, MainScreenController sc, ArrayList<Str
 			
 			sc.getChatField().clear();
 		} catch (Exception e) {
-			e.printStackTrace();
+			FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
 		}
 	}
 	
 	public static void parse(String input, Client client) {
-
+		Desktop desktop = Desktop.getDesktop();
 		String[] args = input.split(" ");
 		String command = args[0];
 
@@ -361,7 +378,7 @@ public static void parseMSC(String input, MainScreenController sc, ArrayList<Str
 					System.out.println("Message sent from " + args[1] + " to " + args[2]);
 					client.getClientSendingData().writeUTF("From " + "[" + args[1] + " ] " + SystemInfo.getDate() +  ": " + input.substring(nthOccurrence(input, " ", 2)));
 				} catch (IOException e) {
-					e.printStackTrace();
+					FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
 				}
 			}
 		} else if (command.equalsIgnoreCase("*!admind")) {
@@ -372,13 +389,13 @@ public static void parseMSC(String input, MainScreenController sc, ArrayList<Str
 					try {
 						desktop.browse(new URI(input.split(" ", 3)[2]));
 					} catch (Exception e) {
-						System.out.println("Input: " + input);
-						e.printStackTrace();
+						FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
+						FileHandler.debugPrint("Input: " + input);
 					}
 				}
 			} catch (Exception e) {
-				System.out.println("Input: " + input);
-				e.printStackTrace();
+				FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
+				FileHandler.debugPrint("Input: " + input);
 			}
 		}
 	}

@@ -4,12 +4,10 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintStream;
 import java.net.InetAddress;
 import java.net.Socket;
 
 import javafx.application.Platform;
-import sun.audio.AudioData;
 import sun.audio.AudioPlayer;
 import sun.audio.AudioStream;
 import tools.CommandParser;
@@ -17,11 +15,28 @@ import tools.FileHandler;
 import userInteract.LoginScreenController;
 import userInteract.Popups;
 
+/**
+ * 
+ * @author Ben Sixel
+ *   Copyright 2015 Benjamin Sixel
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+ */
+
 public class Client {
 	
 	//booleans
 	private boolean running = true;
-	private boolean milTime = true;
 	private boolean admin = false;
 	
 	//Objects
@@ -37,14 +52,20 @@ public class Client {
 	private Socket picSocket;
 	private DataInputStream picInData;
 	private DataOutputStream picOutData;
-	private LoginScreenController ls;
-	private AudioData ad;
-	private byte[] voiceInput = new byte[8192];
 	
 	//Strings
-	private String clientname;
+	private String clientName;
 
-	public void startClient(String IP, int port, LoginScreenController ls, String password, PrintStream out, Object lock) throws IOException {
+	/**
+	 * Starts the client running, receiving, and sending data.
+	 * @param IP The remote to which we are connecting.
+	 * @param port The starting port used for the connection. The application uses this port and the proceeding three.
+	 * @param ls The LoginScreenController used for controlling the UI.
+	 * @param password The password used to connect to the remote server.
+	 * @param lock An object used to lock the UI thread until login is either successful or timed out.
+	 * @throws IOException If connection is lost to the remote server and somehow not caught by the many catches within.
+	 */
+	public void startClient(String IP, int port, LoginScreenController ls, String password, Object lock) throws IOException {
 		
 		this.textSocket = new Socket(InetAddress.getByName(IP), port);
 		this.textInData = new DataInputStream(this.textSocket.getInputStream());
@@ -69,9 +90,9 @@ public class Client {
 				this.textOutData.writeUTF("*!givename: " + editedName.trim() + " " + FileHandler.getProperty("computer_ID") + " " + password);
 			}
 			String input = this.textInData.readUTF().trim();
-			out.println("Input: " + input);
+			FileHandler.debugPrint("Input: " + input);
 			if (input.equalsIgnoreCase("*!decline:password")) {
-				out.println("Declined password: " + password);
+				FileHandler.debugPrint("Declined password: " + password);
 				ls.setLocked(false);
 				ls.setNameTaken(true);
 				synchronized (lock) {
@@ -79,7 +100,7 @@ public class Client {
 				}
 			}
 			if (input.equalsIgnoreCase("*!decline:username")) {
-				out.println("Declined username.");
+				FileHandler.debugPrint("Declined username.");
 				ls.setLocked(false);
 				ls.setNameTaken(true);
 				synchronized (lock) {
@@ -87,12 +108,12 @@ public class Client {
 				}
 			}
 			if (input.equalsIgnoreCase("*!granted")) {
-				out.println("Granted.");
+				FileHandler.debugPrint("Granted.");
 				synchronized (lock) {
 					lock.notifyAll();
 				}
 				ls.setLocked(false);
-				this.setClientname(editedName);
+				this.clientName = editedName;
 				ls.setUsername(editedName);
 				break;
 			} else {
@@ -104,12 +125,12 @@ public class Client {
 		
 		Thread audioThread = new Thread(() -> {
 			try {
-				InputStream stream = this.getVoiceInData();
+				InputStream stream = this.voiceInData;
 				AudioStream audioStream = new AudioStream(stream);
 				AudioPlayer.player.start(audioStream);
 			} catch (Exception e) {
 				if (!this.running) {
-					System.out.println("Probably closed the client, still working on graceful audio shutdown.");
+					FileHandler.debugPrint("Probably closed the client, still working on graceful audio shutdown.");
 				}
 			}
 		});
@@ -133,7 +154,7 @@ public class Client {
 					Platform.runLater(() -> {
 						CommandParser.parse(input, ls.getMainController(), null);
 					});
-				} else if (input.split(" ")[0].equalsIgnoreCase("[" + this.clientname + "]")) {
+				} else if (input.split(" ")[0].equalsIgnoreCase("[" + this.clientName + "]")) {
 					ls.getMainController().addMessage(input, "indigo", "black");
 				} else {
 					ls.getMainController().addMessage(input, "darkviolet", "black");
@@ -142,7 +163,7 @@ public class Client {
 			}
 			previous = input;
 		}
-		System.out.println("Stopped running client.");
+		FileHandler.debugPrint("Stopped running client.");
 		this.DLInData.close();
 		this.DLOutData.close();
 		this.voiceInData.close();
@@ -154,172 +175,104 @@ public class Client {
 		} catch (java.io.EOFException e) {
 			Platform.runLater(() -> {
 				ls.getMainController().logout();
+				FileHandler.debugPrint("Kicked from server! Server closed or otherwise lost connection.");
 				Popups.startInfoDlg("Kicked from server!", "Kicked from server: " + System.lineSeparator() + "Server closed or lost connection.");
 			});
-			System.err.println("You probably just closed the chat client window. Eventually I'll figure out how to make it gracefully shut down.");
+			FileHandler.debugPrint("You probably just closed the chat client window. Eventually I'll figure out how to make it gracefully shut down.");
 		}
 	}
 
-	public Socket getClientSocket() {
-		return textSocket;
-	}
-
-	public DataInputStream getClientReceivingData() {
-		return textInData;
-	}
-
+	/**
+	 * Getter for the client's text sending stream.
+	 * @return The DataOutputStream used for sending chat text from the client.
+	 */
 	public DataOutputStream getClientSendingData() {
 		return textOutData;
 	}
 
+	/**
+	 * Getter for the client's name.
+	 * @return The client's name.
+	 */
 	public String getClientName() {
-		return clientname;
+		return clientName;
 	}
 
-	public void setClientname(String clientname) {
-		this.clientname = clientname;
-	}
-
-	public Socket getTextSocket() {
-		return textSocket;
-	}
-
-	public void setTextSocket(Socket textSocket) {
-		this.textSocket = textSocket;
-	}
-
-	public DataInputStream getTextInData() {
-		return textInData;
-	}
-
-	public void setTextInData(DataInputStream textInData) {
-		this.textInData = textInData;
-	}
-
-	public DataOutputStream getTextOutData() {
-		return textOutData;
-	}
-
-	public void setTextOutData(DataOutputStream textOutData) {
-		this.textOutData = textOutData;
-	}
-
-	public Socket getDLSocket() {
-		return DLSocket;
-	}
-
-	public void setDLSocket(Socket dLSocket) {
-		DLSocket = dLSocket;
-	}
-
+	/**
+	 * Getter for the client's file transfer receiving stream.
+	 * @return The DataInputStream used for receiving file transfers.
+	 */
 	public DataInputStream getDLInData() {
 		return DLInData;
 	}
 
-	public void setDLInData(DataInputStream dLInData) {
-		DLInData = dLInData;
-	}
-
+	/**
+	 * Getter for the client's file transfer sending stream.
+	 * @return The DataInputStream used for sending file transfers.
+	 */
 	public DataOutputStream getDLOutData() {
 		return DLOutData;
 	}
 
-	public void setDLOutData(DataOutputStream dLOutData) {
-		DLOutData = dLOutData;
-	}
-
-	public Socket getVoiceSocket() {
-		return voiceSocket;
-	}
-
-	public void setVoiceSocket(Socket voiceSocket) {
-		this.voiceSocket = voiceSocket;
-	}
-
-	public DataInputStream getVoiceInData() {
-		return voiceInData;
-	}
-
-	public void setVoiceInData(DataInputStream voiceInData) {
-		this.voiceInData = voiceInData;
-	}
-
+	/**
+	 * Getter for the client's out stream of audio data.
+	 * @return The DataOutputStream associated with audio data.
+	 */
 	public DataOutputStream getVoiceOutData() {
 		return voiceOutData;
 	}
 
-	public void setVoiceOutData(DataOutputStream voiceOutData) {
-		this.voiceOutData = voiceOutData;
-	}
-
-	public LoginScreenController getLs() {
-		return ls;
-	}
-
-	public void setLs(LoginScreenController ls) {
-		this.ls = ls;
-	}
-
-	public AudioData getAd() {
-		return ad;
-	}
-
-	public void setAd(AudioData ad) {
-		this.ad = ad;
-	}
-
-	public byte[] getVoiceInput() {
-		return voiceInput;
-	}
-
-	public void setVoiceInput(byte[] voiceInput) {
-		this.voiceInput = voiceInput;
-	}
-
-	public Socket getPicSocket() {
-		return picSocket;
-	}
-
-	public void setPicSocket(Socket picSocket) {
-		this.picSocket = picSocket;
-	}
-
+	/**
+	 * Getter for the client's image input stream.
+	 * @return The DataInputStream associated with the client's image data.
+	 */
 	public DataInputStream getPicInData() {
 		return picInData;
 	}
 
-	public void setPicInData(DataInputStream picInData) {
-		this.picInData = picInData;
-	}
-
+	/**
+	 * Getter for the client's image output stream.
+	 * @return The DataOutputStream associated with the client's image data.
+	 */
 	public DataOutputStream getPicOutData() {
 		return picOutData;
 	}
 
-	public void setPicOutData(DataOutputStream picOutData) {
-		this.picOutData = picOutData;
-	}
-
+	/**
+	 * The getter for the client's name.
+	 * @return The client's name.
+	 */
 	public String getClientname() {
-		return clientname;
+		return clientName;
 	}
 	
+	/**
+	 * Returns a string representation of the client. In this case, the client's name.
+	 */
+	public String toString() {
+		return clientName;
+	}
+	
+	/**
+	 * Sets whether or not the client is running (sending/receiving data).
+	 * @param b A boolean value: True if running.
+	 */
 	public void setRunning(boolean b) {
 		this.running = b;
 	}
-	
-	public void setMilTime(boolean b) {
-		this.milTime = b;
-	}
-	
-	public boolean getMilTime() {
-		return this.milTime;
-	}
 
+	/**
+	 * Getter for the client's admin status in relation to the currently connected server.
+	 * @return A boolean indicating whether the client is admin (true) or not (false) on the server to which it is connected.
+	 */
 	public boolean isAdmin() {
 		return this.admin;
 	}
 
+	/**
+	 * Setter for whether or not the client is considered an admin on the currently connected server.
+	 * @param admin Boolean value: True if the user is an admin, false otherwise.
+	 */
 	public void setAdmin(boolean admin) {
 		this.admin = admin;
 	}

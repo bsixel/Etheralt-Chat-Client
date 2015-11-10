@@ -7,7 +7,6 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 
 import application.ChatClient;
-import application.WindowController;
 import client.Client;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
@@ -36,6 +35,24 @@ import tools.AudioHandler;
 import tools.CommandParser;
 import tools.FileHandler;
 import tools.SystemInfo;
+
+/**
+ * 
+ * @author Ben Sixel
+ *   Copyright 2015 Benjamin Sixel
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+ */
 
 public class MainScreenController implements EventHandler<KeyEvent> {
 
@@ -83,7 +100,7 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 	private HBox columnsContainer = new HBox();
 	private Scene currScene;
 
-	public MainScreenController(GridPane layout, Stage window, Scene currentScene, Scene nextScene, WindowController windowController) throws URISyntaxException, IOException {
+	public MainScreenController(GridPane layout, Stage window, Scene currentScene, Scene nextScene) throws URISyntaxException, IOException {
 
 		new File(FileHandler.downloadsPath).mkdirs();
 		new File(FileHandler.picturesPath).mkdirs();
@@ -106,7 +123,6 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 		this.chatView.setMaxSize(500, 500);
 		this.chatView.hbarPolicyProperty().set(ScrollBarPolicy.NEVER);
 		this.chatView.vbarPolicyProperty().set(ScrollBarPolicy.ALWAYS);
-		//this.chatView.setFitToWidth(true);
 
 		this.scrollButton.setOnAction(e -> {
 			scrollToBottom();
@@ -126,9 +142,9 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 		dlButton.setOnAction(e -> {
 			if (!this.dlField.getText().equals(null) || !this.dlField.getText().equals(null)) {
 				try {
-					FileHandler.downloadFile(this.window, this.dlField.getText(), this);
+					FileHandler.downloadFile(this.dlField.getText(), this);
 				} catch (Exception ex) {
-					ex.printStackTrace();
+					FileHandler.debugPrint(ex.getMessage() + ex.getStackTrace()[0].toString());
 				}
 				this.dlField.clear();
 			}
@@ -158,7 +174,7 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 		try {
 			Thread.sleep(50);
 		} catch (InterruptedException e) {
-			e.printStackTrace();
+			FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
 		}
 		Platform.runLater(() -> {
 			this.chatView.setVvalue(1.0);
@@ -186,8 +202,8 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 		this.firstColumn.getChildren().addAll(this.usernameLabel, this.usersArea, this.chatView, this.chatField);
 		
 		this.currScene.setOnKeyPressed(k -> {
-			if (k.isControlDown() && k.getCode().equals(KeyCode.ESCAPE)) {
-				this.isSpinning = false;
+			if (k.isShiftDown() && k.getCode().equals(KeyCode.ESCAPE)) {
+				this.isSpinning = !this.isSpinning;
 			}
 		});
 		
@@ -227,7 +243,7 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 				this.isSpinning = !this.isSpinning;
 			} catch (Exception ex) {
 				System.out.println("Well, that didn't work. Stop trying to break things.");
-				ex.printStackTrace();
+				FileHandler.debugPrint(ex.getMessage() + ex.getStackTrace()[0].toString());
 			}
 		});
 		
@@ -239,7 +255,7 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 			try {
 				Desktop.getDesktop().open(new File(System.getProperty("user.home") + "/Documents/Etheralt Chat Client"));
 			} catch (Exception e1) {
-				e1.printStackTrace();
+				FileHandler.debugPrint(e1.getMessage() + e1.getStackTrace()[0].toString());
 			}
 		});
 		
@@ -281,7 +297,7 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 						prevInput.add(this.getChatField().getText());
 						this.getChatField().clear();
 					} catch (Exception e) {
-						e.printStackTrace();
+						FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
 					}
 				}
 			} else if (key.getCode() == KeyCode.UP) {
@@ -291,9 +307,8 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 				try {
 					this.chatField.setText(prevInput.get(i));
 				} catch (Exception e) {
-					e.printStackTrace();
-					FileHandler.writeToErrorLog(e.getMessage());
-					System.out.println("Problem scrolling through previous input.");
+					FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
+					FileHandler.debugPrint("Problem scrolling through previous input.");
 				}
 			}
 		});
@@ -434,7 +449,7 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 			window.close();
 			new ChatClient().launch(new Stage());
 		} catch (Exception e) {
-			e.printStackTrace();
+			FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());;
 		}
 	}
 

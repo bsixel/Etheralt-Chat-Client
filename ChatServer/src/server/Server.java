@@ -146,6 +146,8 @@ public class Server {
 				
 			}
 			
+		}catch (Exception e) {
+			e.printStackTrace();
 		} finally {
 			this.server.close();
 			this.DLServer.close();

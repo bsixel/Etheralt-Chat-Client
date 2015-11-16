@@ -47,6 +47,7 @@ public class ServerLauncher {
 					} catch (Exception e2) {
 						debugPrint("Unable to start default server!");
 						debugPrint(e2.getStackTrace()[0].toString());
+						e2.printStackTrace();
 						System.exit(-1);
 					}
 				}

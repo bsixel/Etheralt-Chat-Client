@@ -51,6 +51,9 @@ import userInteract.Popups;
 
 public class FileHandler {
 	
+	/*
+	 * Some constant strings used for finding the properties file and the log files.
+	 */
 	public static final String chatLogPath = System.getProperty("user.home") + "/Documents/Etheralt Chat Client/chat_log.log";
 	public static final String errorLogPath = System.getProperty("user.home") + "/Documents/Etheralt Chat Client/error_log.log";
 	public static final String downloadsPath = System.getProperty("user.home") + "/Documents/Etheralt Chat Client/Downloads";
@@ -479,6 +482,13 @@ public class FileHandler {
 		
 	}
 	
+	/**
+	 * Returns a runnable that sends a file to a remote client or clients, as given by the input.
+	 * @param target The name of the target to which the file is being sent.
+	 * @param file The file to send.
+	 * @param client The client being used to send the file.
+	 * @return A runnable which sends the specified file.
+	 */
 	public static Runnable sendFile(String target, File file, Client client) {
 		Runnable run = () -> {
 			int count = 1;
@@ -505,6 +515,13 @@ public class FileHandler {
 		return run;
 	}
 	
+	/**
+	 * Returns a runnable which downloads an image from a remote client through the given local client.
+	 * @param sc The screen controller used for interaction.
+	 * @param file The destination file to which the image is saved.
+	 * @param length The length of the specified file.
+	 * @return A runnable which downloads an incoming image from a remote client.
+	 */
 	public static Runnable dlPic(MainScreenController sc, File file, long length) {
 		Runnable run = () -> {
 			FileOutputStream fileOut = null;
@@ -546,6 +563,13 @@ public class FileHandler {
 		
 	}
 	
+	/**
+	 * Returns a runnable that sends an image to a remote client or clients, as given by the input.
+	 * @param target The name of the target to which the image is being sent.
+	 * @param file The image to send.
+	 * @param client The client being used to send the image.
+	 * @return A runnable which sends the specified image.
+	 */
 	public static Runnable sendPic(String target, File file, Client client) {
 		Runnable run = () -> {
 			int count = 1;
@@ -570,6 +594,11 @@ public class FileHandler {
 		return run;
 	}
 	
+	/**
+	 * Transmits audio from a file through the screen controller's client streams.
+	 * @param sc The screen controller whose client to use for sending the file.
+	 * @param file The file whose audio is being transmitted.
+	 */
 	public static void transmitAudio(MainScreenController sc, File file) {
 		Client client = sc.getClient();
 		int count = 1;

@@ -440,7 +440,7 @@ public class FileHandler {
 	 * @param sc The screen controller containing the client used to receive data.
 	 * @param file The file save destination.
 	 * @param length The supposed length of the file. Mostly for debugging.
-	 * @return
+	 * @return A runnable which downloads the file.
 	 */
 	public static Runnable dlFile(MainScreenController sc, File file, long length) {
 		Runnable run = () -> {

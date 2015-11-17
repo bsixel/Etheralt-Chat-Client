@@ -4,7 +4,7 @@ import javafx.application.Application;
 import javafx.stage.Stage;
 import tools.FileHandler;
 
-/**
+/*
  * 
  * @author Ben Sixel
  *   Copyright 2015 Benjamin Sixel

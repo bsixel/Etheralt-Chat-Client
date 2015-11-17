@@ -9,7 +9,7 @@ import tools.FileHandler;
 import userInteract.LoginScreenController;
 import userInteract.MainScreenController;
 
-/**
+/*
  * 
  * @author Ben Sixel
  *   Copyright 2015 Benjamin Sixel

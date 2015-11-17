@@ -12,7 +12,7 @@ import javafx.collections.ObservableList;
 import tools.CommandParser;
 import tools.FileHandler;
 
-/**
+/*
  * 
  * @author Ben Sixel
  * The main server object. Controls general server maintenance, although it is not in charge of taking user import server-side.

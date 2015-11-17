@@ -14,7 +14,7 @@ import java.util.Iterator;
 import tools.CommandParser;
 import tools.SystemInfo;
 
-/**
+/*
  * 
  * @author Ben Sixel
  * ClientConnection: The object controlling the connection between the server and a client.

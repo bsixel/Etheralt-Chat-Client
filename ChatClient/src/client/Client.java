@@ -15,7 +15,7 @@ import tools.FileHandler;
 import userInteract.LoginScreenController;
 import userInteract.Popups;
 
-/**
+/*
  * 
  * @author Ben Sixel
  *   Copyright 2015 Benjamin Sixel

@@ -8,7 +8,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 
-/**
+/*
  * 
  * @author Ben Sixel
  *   Copyright 2015 Benjamin Sixel
@@ -28,8 +28,15 @@ import javafx.scene.text.Text;
 
 public class ChatText extends Text {
 	
+	//The message contained in the ChatText
 	String msg;
 	
+	/**
+	 * Creates a new ChatText with the given message, text color, and background color.
+	 * @param msg The message for the ChatText.
+	 * @param textColor The text color.
+	 * @param bgColor The background color.
+	 */
 	public ChatText(String msg, String textColor, String bgColor) {
 		
 		this.setText(msg);
@@ -47,6 +54,10 @@ public class ChatText extends Text {
 		
 	}
 	
+	/**
+	 * Returns the contained text message.
+	 * @return
+	 */
 	public String getMsg() {
 		return super.getText();
 	}

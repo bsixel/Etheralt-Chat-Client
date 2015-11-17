@@ -12,7 +12,7 @@ import server.ClientConnection;
 import server.Server;
 import server.User;
 
-/**
+/*
  * 
  * @author Ben Sixel
  * Command Parser for commands coming from both server and remote clients.

@@ -24,7 +24,7 @@ import javafx.stage.Stage;
 import tools.FileHandler;
 import tools.SystemInfo;
 
-/**
+/*
  * 
  * @author Ben Sixel
  *   Copyright 2015 Benjamin Sixel

@@ -9,7 +9,7 @@ import tools.CommandParser;
 import tools.FileHandler;
 import tools.SystemInfo;
 
-/**
+/*
  * 
  * @author Ben Sixel
  * Server launcher. Launches the server itself and sends user input from the console to the command parser, or directly to chat itself.

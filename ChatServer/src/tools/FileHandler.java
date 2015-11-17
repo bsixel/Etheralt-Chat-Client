@@ -12,7 +12,7 @@ import java.util.Properties;
 
 import server.Server;
 
-/**
+/*
  * 
  * @author Ben Sixel
  * FileHandler class. Deals with system files: 

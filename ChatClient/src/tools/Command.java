@@ -1,6 +1,6 @@
 package tools;
 
-/**
+/*
  * 
  * @author Ben Sixel
  *   Copyright 2015 Benjamin Sixel

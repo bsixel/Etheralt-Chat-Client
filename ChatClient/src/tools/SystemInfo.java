@@ -6,7 +6,7 @@ import java.util.Date;
 
 import javafx.stage.Screen;
 
-/**
+/*
  * 
  * @author Ben Sixel
  *   Copyright 2015 Benjamin Sixel

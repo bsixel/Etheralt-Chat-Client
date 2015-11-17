@@ -14,7 +14,7 @@ import userInteract.ChatText;
 import userInteract.MainScreenController;
 import userInteract.Popups;
 
-/**
+/*
  * 
  * @author Ben Sixel
  *   Copyright 2015 Benjamin Sixel

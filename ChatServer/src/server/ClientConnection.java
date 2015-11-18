@@ -14,7 +14,7 @@ import java.util.Iterator;
 import tools.CommandParser;
 import tools.SystemInfo;
 
-/**
+/*
  * 
  * @author Ben Sixel
  * ClientConnection: The object controlling the connection between the server and a client.
@@ -80,7 +80,7 @@ public class ClientConnection {
 	 */
 	public void startConnection() {
 
-		/**
+		/*
 		 * Establishing a connection with the remote client.
 		 */
 		try {
@@ -94,7 +94,7 @@ public class ClientConnection {
 			this.picSendingData = new DataOutputStream(this.picSocket.getOutputStream());
 
 			
-			/**
+			/*
 			 * Verifying that the desired username is not taken,
 			 *  and the user is providing the correct password to access the server.
 			 */
@@ -137,7 +137,7 @@ public class ClientConnection {
 	        	}
 	        });
 	        
-	        /**
+	        /*
 	         * Notifying other clients of the new user.
 	         */
 	        getServer().getUsers().forEach(u -> {
@@ -149,7 +149,7 @@ public class ClientConnection {
 				}
 	        });
 
-	        /**
+	        /*
 	         * This audio thread is currently not really doing anything.
 	         * Will eventually channel audio data from this client to the others.
 	         */
@@ -203,14 +203,14 @@ public class ClientConnection {
 					break;
 				}
 				
-				/**
+				/*
 				 * Printing normal chat input to server console and chat log.
 				 */
 				if (!received.startsWith("*!")) {
 					chatPrint("[" + this.getClientName() + "] " + SystemInfo.getDate() +  ": " + received);
 				}
 				
-				/**
+				/*
 				 * Distributing received input to either the command parser or the other connected clients.
 				 */
 				try {
@@ -240,11 +240,16 @@ public class ClientConnection {
 
 			}
 		} catch (SocketException e) {
-			/**
+			/*
 			 * This should come into effect when the user disconnects on their own, 
 			 * whether by closing their client window or losing their connection.
 			 */
-			getServer().killUser(getClientName(), "User disconnected.");
+			try {
+				getServer().killUser(getClientName(), "User disconnected.");
+			} catch (ConcurrentModificationException e2) {
+				debugPrint(e.getStackTrace()[0].toString());
+				debugPrint("Unable to kill user - another thread had already done so!");
+			}
 			str = initStr;
             getServer().getUsers().forEach(u -> {
             	if (str.split(" ").length < 3) {
@@ -264,9 +269,14 @@ public class ClientConnection {
             });
 		} catch (IOException e1) {
 			debugPrint(e1.getStackTrace()[0].toString());
-			this.server.killUser(clientName, "Lost connection to client.");
+			try {
+				this.server.killUser(clientName, "Lost connection to client.");
+			} catch (ConcurrentModificationException e2) {
+				debugPrint(e2.getStackTrace()[0].toString());
+				debugPrint("Unable to kill user - another thread had already done so!");
+			}
 		} finally {
-			/**
+			/*
 			 * In the unforseeable case that somehow the client expires server-side.
 			 * Actually this is probably done in this case of kicks.
 			 */
@@ -280,7 +290,12 @@ public class ClientConnection {
 				Thread.currentThread().interrupt();
 			} catch (IOException e1) {
 				debugPrint("System exception: ClientConnection line "  + this.clientName + " was terminated unexpectedly. May have been kicked?");
-				this.server.killUser(clientName, "Lost connection to client.");
+				try {
+					this.server.killUser(clientName, "Lost connection to client.");
+				} catch (ConcurrentModificationException e2) {
+					debugPrint(e2.getStackTrace()[0].toString());
+					debugPrint("Unable to kill user - another thread had already done so!");
+				}
 			}
 		}
 

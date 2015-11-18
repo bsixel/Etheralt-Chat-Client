@@ -7,7 +7,7 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.Node;
 import javafx.scene.layout.VBox;
 
-/**
+/*
  * 
  * @author Ben Sixel
  *   Copyright 2015 Benjamin Sixel
@@ -27,8 +27,12 @@ import javafx.scene.layout.VBox;
 
 public class ChatBox extends VBox {
 	
+	//Boolean for whether the chat box is at the bottom.
 	private SimpleBooleanProperty bottom = new SimpleBooleanProperty(false);
 	
+	/**
+	 * Initiates a new ChatBox with width 500 and the default styling for a ChatBox as defined in the CSS file.
+	 */
 	public ChatBox() {
 		
 		this.setMaxWidth(500);
@@ -38,31 +42,47 @@ public class ChatBox extends VBox {
 		
 	}
 	
+	/**
+	 * Adds a new ChatText object contained within this ChatBox, with the desired colors and message.
+	 * @param msg The message to display on the ChatText.
+	 * @param color The color of the text.
+	 * @param bgColor The color of the background.
+	 */
 	public void addText(String msg, String color, String bgColor) {
-		
 		this.getChildren().add(new ChatText(msg, color, bgColor));
-		
 	}
 	
+	/**
+	 * Gets the ChatTexts as a list.
+	 * @return A list containing all of the ChatTexts.
+	 */
 	public List<Node> getMessages() {
 		return this.getChildren().stream()
 				.filter(e -> e.getClass().equals(ChatText.class)).collect(Collectors.toList());
 	}
 
+	/**
+	 * Adds an already built ChatText to this ChatBox.
+	 * @param chatText The ChatText to add.
+	 */
 	public void addText(ChatText chatText) {
 		this.getChildren().add(chatText);
 	}
 	
+	/**
+	 * Returns the bottom boolean.
+	 * @return The boolean value 'bottom'.
+	 */
 	public Boolean getIsAtBottom() {
 		return this.bottom.getValue();
 	}
 	
+	/**
+	 * Sets the bottom boolean to the given value.
+	 * @param b The value being given to bottom.
+	 */
 	public void setIsAtBottom(boolean b) {
 		this.bottom.set(b);
-	}
-	
-	public SimpleBooleanProperty getBottomProperty() {
-		return this.bottom;
 	}
 	
 }

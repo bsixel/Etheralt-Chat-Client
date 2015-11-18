@@ -1,6 +1,6 @@
 package server;
 
-/**
+/*
  * User object used to store information about the remote client.
  * @author Ben Sixel
  *

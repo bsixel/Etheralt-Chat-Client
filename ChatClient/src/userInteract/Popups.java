@@ -3,6 +3,8 @@ package userInteract;
 import java.io.File;
 
 import application.ChatClient;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -21,7 +23,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
-/**
+/*
  * 
  * @author Ben Sixel
  *   Copyright 2015 Benjamin Sixel
@@ -41,9 +43,11 @@ import javafx.stage.StageStyle;
 
 public class Popups {
 	
-	private static boolean b = false;
-	private static File file = null;
-	
+	/**
+	 * Starts a popup which simply presents a message to the user.
+	 * @param title The title of the popup.
+	 * @param info The message being shown by the popup.
+	 */
 	public static void startInfoDlg(String title, String info) {
 		
 		Stage popup = new Stage(StageStyle.UTILITY);
@@ -72,7 +76,13 @@ public class Popups {
 		
 	}
 	
+	/**
+	 * Starts a dialog prompting for a yes or no answer from the user, returned after one of the corresponding buttons is pressed as a boolean.
+	 * @param question The question being asked.
+	 * @return A boolean: true for yes, false for no.
+	 */
 	public static boolean startConfDlg(String question) {
+		BooleanProperty b = new SimpleBooleanProperty(false);
 		Stage popup = new Stage(StageStyle.UTILITY);
 		VBox layout = new VBox(5);
 		layout.setAlignment(Pos.CENTER);
@@ -80,15 +90,15 @@ public class Popups {
 		Scene scene = new Scene(layout, popup.getWidth(), popup.getHeight());
 		popup.setScene(scene);
 		scene.setFill(Color.SILVER);
-		popup.setOnCloseRequest(e -> b = false);
+		popup.setOnCloseRequest(e -> b.set(false));
 		Button yesButton = new Button("Yes");
 		yesButton.setOnAction(e -> {
-			b = true;
+			b.set(true);
 			popup.close();
 		});
 		Button noButton = new Button("No");
 		noButton.setOnAction(e -> {
-			b = false;
+			b.set(false);
 			popup.close();
 		});
 		yesButton.addEventHandler(KeyEvent.KEY_PRESSED, key -> {
@@ -118,21 +128,27 @@ public class Popups {
 		layout.getChildren().addAll(infoLabel, buttonLayout);
 		popup.setAlwaysOnTop(true);
 		popup.showAndWait();
-		return b;
+		return b.get();
 	}
 	
+	/**
+	 * Starts a popup prompting the user for a password. Hides the password in a system-determined format.
+	 * @param question The question being asked. i.e. "Please enter password:" or some such.
+	 * @return The string password the user entered.
+	 */
 	public static String startPasswdDlg(String question) {
+		BooleanProperty b = new SimpleBooleanProperty(false);
 		Stage popup = new Stage(StageStyle.UNDECORATED);
 		VBox layout = new VBox(5);
 		layout.setAlignment(Pos.CENTER);
 		Scene scene = new Scene(layout, popup.getWidth(), popup.getHeight());
 		popup.setScene(scene);
 		scene.setFill(Color.SILVER);
-		popup.setOnCloseRequest(e -> b = false);
+		popup.setOnCloseRequest(e -> b.set(false));
 		PasswordField passField = new PasswordField();
 		Button submitButton = new Button("Submit");
 		submitButton.setOnAction(e -> {
-			b = true;
+			b.set(true);
 			popup.close();
 		});
 		passField.setOnKeyPressed(e -> {
@@ -164,18 +180,24 @@ public class Popups {
 		return passField.getText();
 	}
 	
+	/**
+	 * Starts a popup prompting the user to enter an answer in the provided text field.
+	 * @param question The question being asked.
+	 * @return A string representation of the answer given by the user.
+	 */
 	public static String startAnsDlg(String question) {
+		BooleanProperty b = new SimpleBooleanProperty(false);
 		Stage popup = new Stage(StageStyle.UNDECORATED);
 		VBox layout = new VBox(5);
 		layout.setAlignment(Pos.CENTER);
 		Scene scene = new Scene(layout, popup.getWidth(), popup.getHeight());
 		popup.setScene(scene);
 		scene.setFill(Color.SILVER);
-		popup.setOnCloseRequest(e -> b = false);
+		popup.setOnCloseRequest(e -> b.set(false));
 		TextField ansField = new TextField();
 		Button submitButton = new Button("Submit");
 		submitButton.setOnAction(e -> {
-			b = true;
+			b.set(true);
 			popup.close();
 		});
 		ansField.setOnKeyPressed(e -> {
@@ -207,6 +229,11 @@ public class Popups {
 		return ansField.getText();
 	}
 
+	/**
+	 * Starts a new popup prompting the user to select a file to open.
+	 * @param title The desired title of the popup.
+	 * @return A File object representing the file the user chose.
+	 */
 	public static File startFileOpener(String title) {
 		
 		Stage popup = new Stage();
@@ -217,6 +244,12 @@ public class Popups {
 		
 	}
 	
+	/**
+	 * Starts a popup prompting the user to select a destination for saving a file. Starts with suggested file extension.
+	 * @param title The title of the popup.
+	 * @param ext The extension initially suggested.
+	 * @return The File object representing where the user will be saving the file.
+	 */
 	public static File startFileSaver(String title, String ext) {
 		
 		Stage popup = new Stage();
@@ -224,12 +257,17 @@ public class Popups {
 		fileChooser.setTitle(title);
 		fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
 		fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("All Files", "*.*"), new FileChooser.ExtensionFilter(ext + " Files", "*." + ext));
-		file = fileChooser.showSaveDialog(popup);
-		
-		return file;
+		return fileChooser.showSaveDialog(popup);
 		
 	}
 	
+	/**
+	 * Starts a popup prompting the user to select a destination for saving a file. Starts with suggested file extension and a suggested name.
+	 * @param title The title of the popup.
+	 * @param ext The extension initially suggested.
+	 * @param name The initially suggested name for the file.
+	 * @return The File object representing where the user will be saving the file.
+	 */
 	public static File startFileSaver(String title, String ext, String name) {
 		
 		Stage popup = new Stage();
@@ -240,12 +278,15 @@ public class Popups {
 		FileChooser.ExtensionFilter prefFilter = new FileChooser.ExtensionFilter(ext + " Files", "*." + ext);
 		fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("All Files", "*.*"), prefFilter);
 		fileChooser.setSelectedExtensionFilter(prefFilter);
-		file = fileChooser.showSaveDialog(popup);
-		
-		return file;
+		return fileChooser.showSaveDialog(popup);
 		
 	}
 	
+	/**
+	 * Starts a popup prompting the user to select a destination for saving a file.
+	 * @param title The title of the popup.
+	 * @return The File object representing where the user will be saving the file.
+	 */
 	public static File startFileSaver(String title) {
 		
 		Stage popup = new Stage();
@@ -256,6 +297,11 @@ public class Popups {
 		
 	}
 	
+	/**
+	 * Starts a popup prompting the user to select and image to open.
+	 * @param title The title for the popup.
+	 * @return The File object representing the location of the image.
+	 */
 	public static File startPictureOpener(String title) {
 		
 		Stage popup = new Stage(StageStyle.UTILITY);
@@ -270,6 +316,11 @@ public class Popups {
 		
 	}
 	
+	/**
+	 * Starts a popup to view the given image.
+	 * @param title The title of the popup.
+	 * @param img The image to display.
+	 */
 	public static void startImageViewer(String title, Image img) {
 		
 		Stage popup = new Stage(StageStyle.UNIFIED);

@@ -13,7 +13,7 @@ import client.Client;
 
 
 
-/**
+/*
  * 
  * @author Ben Sixel
  *   Copyright 2015 Benjamin Sixel

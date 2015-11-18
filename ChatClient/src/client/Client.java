@@ -15,7 +15,7 @@ import tools.FileHandler;
 import userInteract.LoginScreenController;
 import userInteract.Popups;
 
-/**
+/*
  * 
  * @author Ben Sixel
  *   Copyright 2015 Benjamin Sixel
@@ -110,9 +110,9 @@ public class Client {
 			if (input.equalsIgnoreCase("*!granted")) {
 				FileHandler.debugPrint("Granted.");
 				synchronized (lock) {
+					ls.setLocked(false);
 					lock.notifyAll();
 				}
-				ls.setLocked(false);
 				this.clientName = editedName;
 				ls.setUsername(editedName);
 				break;
@@ -148,11 +148,9 @@ public class Client {
 					String phrase = input.trim().substring(input.trim().indexOf("!") + 1);
 					ls.getMainController().addMessage(phrase, "blue", "black");
 
-				} else if (input.startsWith("*!")) {
-					CommandParser.parse(input, this);
-				} else if (input.startsWith("/")) {
+				} else if (input.startsWith("/") || input.startsWith("*!")) {
 					Platform.runLater(() -> {
-						CommandParser.parse(input, ls.getMainController(), null);
+						CommandParser.parse(input, ls.getMainController());
 					});
 				} else if (input.split(" ")[0].equalsIgnoreCase("[" + this.clientName + "]")) {
 					ls.getMainController().addMessage(input, "indigo", "black");

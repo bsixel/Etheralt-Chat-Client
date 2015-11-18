@@ -6,13 +6,14 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.util.ConcurrentModificationException;
 import java.util.stream.Collectors;
 
 import server.ClientConnection;
 import server.Server;
 import server.User;
 
-/**
+/*
  * 
  * @author Ben Sixel
  * Command Parser for commands coming from both server and remote clients.
@@ -215,7 +216,12 @@ public class CommandParser {
 				}
 			}
 		} else if (command.equalsIgnoreCase("*!kick") && (selfClient.getUser().isAdmin() || FileHandler.getProperty("admins").contains(selfClient.getUser().getID()))) {
-			client.getServer().killUser(args[1], input.split("'")[1]);
+			try {
+				client.getServer().killUser(args[1], input.split("'")[1]);
+			} catch (ConcurrentModificationException e) {
+				debugPrint(e.getStackTrace()[0].toString());
+				debugPrint("Unable to kill user - another thread had already done so!");
+			}
 		} else if (command.equalsIgnoreCase("*!disconnect")) {
 			client.getServer().killUser(args[1], input.split("'")[1]);
 		}

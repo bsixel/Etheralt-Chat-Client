@@ -50,7 +50,7 @@ public class ChatClient extends Application {
 			this.loginScene = new Scene(mainScreenLayout, window.getWidth(), window.getHeight());
 			this.secondScreenLayout.setId("loginbackground");
 			this.mainScene = new Scene(secondScreenLayout, window.getWidth(), window.getHeight());
-			this.mainScreenController = new MainScreenController(secondScreenLayout, window, mainScene, loginScene);
+			this.mainScreenController = new MainScreenController(secondScreenLayout, window, mainScene);
 			this.loginScreenController = new LoginScreenController(mainScreenController, mainScreenLayout, window, mainScene);
 			this.loginScreenController.initLoginScreen();
 			this.mainScreenController.initMainScreen();

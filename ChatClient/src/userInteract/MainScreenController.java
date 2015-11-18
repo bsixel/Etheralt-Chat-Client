@@ -3,7 +3,6 @@ package userInteract;
 import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 
 import application.ChatClient;
@@ -68,14 +67,13 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 	private Button sendButton = new Button("Send File");
 
 	//Numbers
-	int i = 0;
+	int chatHistoryIndex = 0;
 
 	//Booleans
-	private boolean isHosting;
 	private boolean isSpinning = false;
 
 	//Strings
-	private String username = "";
+	private String bufferedInput = "";
 
 	//Scene
 	private Stage window;
@@ -100,17 +98,27 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 	private HBox columnsContainer = new HBox();
 	private Scene currScene;
 
-	public MainScreenController(GridPane layout, Stage window, Scene currentScene, Scene nextScene) throws URISyntaxException, IOException {
-
+	/**
+	 * Initiates a new MainScreenController with the given GridPane as the root layout, and the window as the containing stage.
+	 * @param layout The layout to use as the root of the scene. Contains a couple of inner layouts within itself.
+	 * @param window The window to use as the container for everything visible.
+	 * @param mainScene 
+	 * @throws IOException Thrown if there is an error while trying to read the chat log from past sessions.
+	 */
+	public MainScreenController(GridPane layout, Stage window, Scene mainScene) throws IOException {
+		
 		new File(FileHandler.downloadsPath).mkdirs();
 		new File(FileHandler.picturesPath).mkdirs();
 		this.layout = layout;
 		this.window = window;
 		FileHandler.readLog(this.getChatBox());
-		this.currScene = currentScene;
+		this.currScene = mainScene;
 
 	}
 
+	/**
+	 * Initiates the ChatView and its respective column.
+	 */
 	private void initChatView() {
 		
 		this.firstColumn.setPrefSize(500, 675);
@@ -130,6 +138,9 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 
 	}
 
+	/**
+	 * Initiates the second column, containing the download button and the media viewing panel.
+	 */
 	private void initSecondColumn() {
 		
 		this.secondColumn.setPadding(new Insets(10, 10, 10, 10));
@@ -160,6 +171,9 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 
 	}
 	
+	/**
+	 * Initializes the connected user list area, showing the list of connected users.
+	 */
 	private void initUsersArea() {
 		
 		this.usersArea.setWrapText(true);
@@ -170,9 +184,12 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 
 	}
 
+	/**
+	 * Scrolls the chat view to the bottom.
+	 */
 	public void scrollToBottom() {
 		try {
-			Thread.sleep(50);
+			Thread.sleep(100);
 		} catch (InterruptedException e) {
 			FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
 		}
@@ -181,6 +198,9 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 		});
 	}
 
+	/**
+	 * Initiates the label showing the name of the currently connected user.
+	 */
 	private void initUsernameLabel() {
 
 		this.usernameLabel = new Label();
@@ -189,6 +209,9 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 
 	}
 
+	/**
+	 * Initiates the root layout of the chat screen.
+	 */
 	private void initLayout() {
 
 		this.layout.setPadding(new Insets(10, 10, 10, 10));
@@ -209,6 +232,9 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 		
 	}
 	
+	/**
+	 * Initiates the voice transmission toggle. Currently doesn't actually do much of anything.
+	 */
 	private void initToggle() {
 		
 		this.tb.setId("voice-toggle");
@@ -227,6 +253,9 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 		
 	}
 	
+	/**
+	 * Initiates the extra buttons - namely the experimental science button, the send file button, and the open resources folder button.
+	 */
 	private void initExtraButtons() {
 		this.scienceButton.setId("science");
 		Timeline timeline = new Timeline(new KeyFrame(Duration.millis(100), a -> {
@@ -261,6 +290,12 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 		
 	}
 
+	/**
+	 * Adds a message to the chat log and the chat view, then scrolls down to the bottom of the chat view.
+	 * @param msg The message to add.
+	 * @param color The text color to use.
+	 * @param bgColor The background color to use.
+	 */
 	public void addMessage(String msg, String color, String bgColor) {
 
 		FileHandler.writeToChatLog(msg);
@@ -275,6 +310,9 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 
 	}
 
+	/**
+	 * Initiates the chat input field.
+	 */
 	private void initChatField() {
 
 		ArrayList<String> prevInput = new ArrayList<String>();
@@ -282,15 +320,28 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 		this.getChatField().setMaxHeight(10);
 		this.getChatField().autosize();
 		this.getChatField().setWrapText(true);
+		
+		
+		/*
+		 * When the key 'ENTER' is pressed, the chat input field sends the input to the server and adds a message to the chat view.
+		 * The message is either the message given by the command entered, or the message sent by the user if it is simply a plain text message.
+		 * 
+		 * When the 'UP' arrow is hit, the input field cycles up through previous sent commands.
+		 * When the 'DOWN' arrow is hit, the input field cycles down through previous sent commands.
+		 */
 		this.getChatField().addEventHandler(KeyEvent.KEY_PRESSED, key -> {
 			if (key.getCode() == KeyCode.ENTER) {
 				key.consume();
+
 				if (this.getChatField().getText().startsWith("*!")) {
 					
 				} else if (this.getChatField().getText().startsWith("/")) {
 					Platform.runLater(() -> {
-						CommandParser.parseMSC(this.getChatField().getText(), this, prevInput);
+						CommandParser.parseMSC(this.getChatField().getText(), this);
 					});
+					if (prevInput != null) {
+						prevInput.add(this.getChatField().getText());
+					}
 				} else {
 					try {
 						this.getClient().getClientSendingData().writeUTF(this.getChatField().getText().trim());
@@ -301,11 +352,30 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 					}
 				}
 			} else if (key.getCode() == KeyCode.UP) {
-				if (i < prevInput.size() - 1) {
-					i++;
+				if (this.bufferedInput.equals("")) {
+					this.bufferedInput = this.chatField.getText();
+				}
+				if (chatHistoryIndex < prevInput.size() - 1) {
+					chatHistoryIndex++;
 				}
 				try {
-					this.chatField.setText(prevInput.get(i));
+					if (prevInput.size() != 0) {
+						this.chatField.setText(prevInput.get(chatHistoryIndex));
+					}
+				} catch (Exception e) {
+					FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
+					FileHandler.debugPrint("Problem scrolling through previous input.");
+					FileHandler.debugPrint("Chat history index: " + chatHistoryIndex);
+				}
+			} else if (key.getCode() == KeyCode.DOWN) {
+				if (chatHistoryIndex > 0) {
+					chatHistoryIndex--;
+				} else {
+					this.getChatField().setText(this.bufferedInput);
+					this.bufferedInput = "";
+				}
+				try {
+					this.chatField.setText(prevInput.get(chatHistoryIndex));
 				} catch (Exception e) {
 					FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
 					FileHandler.debugPrint("Problem scrolling through previous input.");
@@ -315,6 +385,9 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 
 	}
 
+	/**
+	 * Initiates the logout button.
+	 */
 	private void initLogoutButton() {
 
 		this.logoutButton = new Button();
@@ -325,6 +398,9 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 
 	}
 
+	/**
+	 * Initiates the chat screen. Calls a bunch of helper methods to initialize different individual aspects.
+	 */
 	public void initMainScreen() {
 
 		initChatView();
@@ -339,101 +415,85 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 
 	}
 
-	public void setUsername(String username) {
-		this.username = username;
-	}
-
-	public String getUsername() {
-		return this.username;
-	}
-
+	/**
+	 * Gets the username label, used for displaying the currently connected user's name.
+	 * @return A label showing the name of the connected user.
+	 */
 	public Label getUsernameLabel() {
 		return this.usernameLabel;
 	}
 
-	public GridPane getLayout() {
-		return this.layout;
-	}
-
-	public void setIsHosting(boolean b) {
-		this.isHosting = b;
-	}
-
-	public boolean getIsHosting() {
-		return this.isHosting;
-	}
-
+	/**
+	 * Gets the client object used for transmitting and receiving data.
+	 * @return The client object for this user.
+	 */
 	public Client getClient() {
 		return this.client;
 	}
 
-	public void setClient(Client client) {
-		this.client = client;
-	}
-
-	public ScrollPane getChatView() {
-		return chatView;
-	}
-
-	public void setChatView(ScrollPane chatView) {
-		this.chatView = chatView;
-	}
-
+	/**
+	 * Gets the chat field used for entering commands and messages.
+	 * @return A TextArea in which the user enters commands and messages.
+	 */
 	public TextArea getChatField() {
 		return chatField;
 	}
 
-	public void setChatField(TextArea chatField) {
-		this.chatField = chatField;
-	}
-
+	/**
+	 * Returns the users area, where the list of connected users is displayed.
+	 * @return A TextArea containing a list of connected users.
+	 */
 	public TextArea getUsersArea() {
 		return this.usersArea;
 	}
 
+	/**
+	 * Gets the ChatBox used for displaying chat messages.
+	 * @return A ChatBox containing messages.
+	 */
 	public ChatBox getChatBox() {
 		return chatBox;
 	}
 
-	public void setChatBox(ChatBox chatBox) {
-		this.chatBox = chatBox;
-	}
-
-	public int getI() {
-		return this.i;
-	}
-
+	/**
+	 * Returns a list of threads currently running that are being used for downloading files.
+	 * @return A list of download threads.
+	 */
 	public ArrayList<Thread> getDlThreads() {
 		return dlThreads;
 	}
 
-	public void setDlThreads(ArrayList<Thread> dlThreads) {
-		this.dlThreads = dlThreads;
-	}
-
+	/**
+	 * Gets the window containing the chat UI.
+	 * @return A stage which contains the user interface.
+	 */
 	public Stage getWindow() {
 		return window;
 	}
 
-	public void setWindow(Stage window) {
-		this.window = window;
-	}
-
 	@Override
+	/**
+	 * @Override
+	 * Handles the global press of keys.
+	 * @param key The key pressed.
+	 */
 	public void handle(KeyEvent key) {
 		if (key.getCode().equals(KeyCode.PAGE_DOWN)) {
 			this.scrollButton.fire();
 		}
 	}
 
+	/**
+	 * Returns the column of media/images displayed in the media tab.
+	 * @return A VBox containing all of the media items being displayed.
+	 */
 	public VBox getImages() {
 		return images;
 	}
-
-	public void setImages(VBox images) {
-		this.images = images;
-	}
 	
+	/**
+	 * Forcibly logs the user out of the server and returns them to the login screen.
+	 */
 	public void logout() {
 		try {
 			this.getClient().getClientSendingData().writeUTF("*![System] " + SystemInfo.getDate() + ": " + this.getClient().getClientName() + " has disconnected.");
@@ -441,7 +501,7 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 			this.getClient().getClientSendingData().writeUTF("*!disconnect " + this.client.getClientName() + " 'Client disconnected.'");
 			System.out.println("Yeah here.");
 			getClient().setRunning(false);
-			this.getClientThread().interrupt();
+			this.clientThread.interrupt();
 		} catch (Exception e) {
 			
 		}
@@ -451,14 +511,6 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 		} catch (Exception e) {
 			FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());;
 		}
-	}
-
-	public Thread getClientThread() {
-		return clientThread;
-	}
-
-	public void setClientThread(Thread clientThread) {
-		this.clientThread = clientThread;
 	}
 
 }

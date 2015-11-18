@@ -244,7 +244,12 @@ public class ClientConnection {
 			 * This should come into effect when the user disconnects on their own, 
 			 * whether by closing their client window or losing their connection.
 			 */
-			getServer().killUser(getClientName(), "User disconnected.");
+			try {
+				getServer().killUser(getClientName(), "User disconnected.");
+			} catch (ConcurrentModificationException e2) {
+				debugPrint(e.getStackTrace()[0].toString());
+				debugPrint("Unable to kill user - another thread had already done so!");
+			}
 			str = initStr;
             getServer().getUsers().forEach(u -> {
             	if (str.split(" ").length < 3) {
@@ -264,7 +269,12 @@ public class ClientConnection {
             });
 		} catch (IOException e1) {
 			debugPrint(e1.getStackTrace()[0].toString());
-			this.server.killUser(clientName, "Lost connection to client.");
+			try {
+				this.server.killUser(clientName, "Lost connection to client.");
+			} catch (ConcurrentModificationException e2) {
+				debugPrint(e2.getStackTrace()[0].toString());
+				debugPrint("Unable to kill user - another thread had already done so!");
+			}
 		} finally {
 			/*
 			 * In the unforseeable case that somehow the client expires server-side.
@@ -280,7 +290,12 @@ public class ClientConnection {
 				Thread.currentThread().interrupt();
 			} catch (IOException e1) {
 				debugPrint("System exception: ClientConnection line "  + this.clientName + " was terminated unexpectedly. May have been kicked?");
-				this.server.killUser(clientName, "Lost connection to client.");
+				try {
+					this.server.killUser(clientName, "Lost connection to client.");
+				} catch (ConcurrentModificationException e2) {
+					debugPrint(e2.getStackTrace()[0].toString());
+					debugPrint("Unable to kill user - another thread had already done so!");
+				}
 			}
 		}
 

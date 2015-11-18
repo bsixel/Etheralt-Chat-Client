@@ -5,6 +5,7 @@ import static tools.FileHandler.debugPrint;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 
 import javafx.collections.FXCollections;
@@ -160,8 +161,9 @@ public class Server {
 	 * Method for removing users forcefully from the server (kicks, client-side disconnects, etc).
 	 * @param name The user being removed.
 	 * @param reason The reason for which the user is being removed.
+	 * @throws ConcurrentModificationException If this process and another are both trying to edit the user list.
 	 */
-	public void killUser(String name, String reason) {
+	public void killUser(String name, String reason) throws ConcurrentModificationException {
 		Iterator<User> iter = getUsers().iterator();
 		while (iter.hasNext()) {
 			User u;

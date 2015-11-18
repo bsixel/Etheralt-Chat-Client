@@ -110,9 +110,9 @@ public class Client {
 			if (input.equalsIgnoreCase("*!granted")) {
 				FileHandler.debugPrint("Granted.");
 				synchronized (lock) {
+					ls.setLocked(false);
 					lock.notifyAll();
 				}
-				ls.setLocked(false);
 				this.clientName = editedName;
 				ls.setUsername(editedName);
 				break;

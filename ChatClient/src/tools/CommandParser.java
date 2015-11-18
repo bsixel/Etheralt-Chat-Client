@@ -4,7 +4,6 @@ import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 import javafx.application.Platform;
@@ -163,16 +162,11 @@ public class CommandParser {
 	 * Parses commands coming from the chat window.
 	 * @param input The command to parse, with arguments.
 	 * @param sc The windows controller sending the commands.
-	 * @param prevInput The list of previous inputs, used for repeating previous commands.
 	 */
-	public static void parseMSC(String input, MainScreenController sc, ArrayList<String> prevInput) {
+	public static void parseMSC(String input, MainScreenController sc) {
 		Desktop desktop = Desktop.getDesktop();
 		String[] args = input.split(" ");
 		String command = args[0];
-
-		if (prevInput != null) {
-			prevInput.add(input);
-		}
 
 		if (command.equals("/tell")) {
 

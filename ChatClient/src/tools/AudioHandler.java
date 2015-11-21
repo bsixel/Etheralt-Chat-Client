@@ -38,7 +38,7 @@ public class AudioHandler {
 	private AudioFileFormat.Type fileType = AudioFileFormat.Type.WAVE;
 	private TargetDataLine mic;
 	private byte[] audioBuffer = new byte[10000];
-	private Client client;
+	//private Client client;
 	private Thread voice;
 	
 	/**
@@ -46,7 +46,7 @@ public class AudioHandler {
 	 * @param client Client to use for incoming/outgoing streams.
 	 */
 	public AudioHandler(Client client) {
-		this.client = client;
+		//this.client = client;
 	}
 
 	/**
@@ -87,7 +87,7 @@ public class AudioHandler {
 			voice = new Thread(() -> {
 				while (true) {
 					try {
-						this.client.getVoiceOutData().write(audioBuffer);
+						//this.client.getVoiceOutData().write(audioBuffer);
 					} catch (Exception e) {
 						System.out.println("Voice chat failed: unable to send voice bytes.");
 						FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());

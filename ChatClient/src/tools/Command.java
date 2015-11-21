@@ -1,5 +1,7 @@
 package tools;
 
+import java.io.Serializable;
+
 /*
  * 
  * @author Ben Sixel
@@ -25,8 +27,9 @@ package tools;
  *
  */
 
-public class Command {
+public class Command implements Serializable {
 
+	private static final long serialVersionUID = -411661664259234767L;
 	private String name;
 	private String description;
 	private Runnable command;

@@ -20,9 +20,9 @@ import server.User;
  */
 
 public class CommandParser {
-	
+
 	private static final String initStr = "Connected users:";
-	
+
 	/**
 	 * Gets the nth occurrence of a string c in another string str.
 	 * @param str The string we are searching within.
@@ -31,12 +31,12 @@ public class CommandParser {
 	 * @return An int representing the position at which the string occurs for the nth time.
 	 */
 	public static int nthOccurrence(String str, String c, int n) {
-	    int pos = str.indexOf(c, 0);
-	    while (n-- > 0 && pos != -1)
-	        pos = str.indexOf(c, pos + 1);
-	    return pos;
+		int pos = str.indexOf(c, 0);
+		while (n-- > 0 && pos != -1)
+			pos = str.indexOf(c, pos + 1);
+		return pos;
 	}
-	
+
 	/**
 	 * Parses commands coming from the server itself.
 	 * @param input The string which we are parsing.
@@ -46,12 +46,12 @@ public class CommandParser {
 	public static void parse(String input, Server server) throws Exception {
 		String[] args = input.split(" ");
 		String command = args[0];
-		
+
 		if (command.equalsIgnoreCase("/admin")) {
 			server.getUsers().forEach(u -> {
 				if (u.getDisplayName().equalsIgnoreCase(args[1])) {
 					try {
-						u.getCC().getSendingData().writeUTF("*!admind");
+						u.sendCommand("*!admind");
 						String currAdmins = FileHandler.getProperty("admins");
 						if (currAdmins == null || currAdmins.equals("")) {
 							currAdmins = "";
@@ -96,14 +96,13 @@ public class CommandParser {
 		} else if (command.equalsIgnoreCase("/updateusers")) {
 			String users = buildUsers(server);
 			debugPrint("Updating connected users for clients.");
-	        server.getUsers().forEach(u -> {
-	        	try {
-					u.getCC().getSendingData().writeUTF("/updateusers " + users);
-					throw new Exception();
+			server.getUsers().forEach(u -> {
+				try {
+					u.sendCommand("/updateusers " + users);
 				} catch (Exception e) {
 					debugPrint("Error notifying of new connection: " + e.getStackTrace()[0].toString());
 				}
-	        });
+			});
 		} else if (command.equalsIgnoreCase("/port")) {
 			System.out.println(server.getPortStart());
 		} else if (command.equalsIgnoreCase("/admins")) {
@@ -114,10 +113,10 @@ public class CommandParser {
 				System.out.printf("Registered admins: %1$s%n", admins);
 			}
 		}
-		
+
 		System.out.print("> ");
 	}
-	
+
 	/**
 	 * Build a string containing connected users.
 	 * @param server The server whose users are being organized.
@@ -125,16 +124,16 @@ public class CommandParser {
 	 */
 	public static String buildUsers(Server server) {
 		String str = initStr;
-        for (User u:server.getUsers()) {
-        	if (str.split(" ").length < 3) {
-        		str += " " + u.getDisplayName();
-        	} else {
-        		str += ", " + u.getDisplayName();
-        	}
-        };
-        return str;
+		for (User u:server.getUsers()) {
+			if (str.split(" ").length < 3) {
+				str += " " + u.getDisplayName();
+			} else {
+				str += ", " + u.getDisplayName();
+			}
+		};
+		return str;
 	}
-	
+
 	/**
 	 * Parses commands coming in from remote clients and redistributes or enacts them.
 	 * @param input The command and arguments for the command which are being parsed.
@@ -150,7 +149,7 @@ public class CommandParser {
 			if (client.getClientName().equalsIgnoreCase(args[2]) || args[2].equals("all")) {
 				try {
 					System.out.println("Message sent from " + args[1] + " to " + args[2]);
-					client.getSendingData().writeUTF("From " + "[" + args[1] + " ] " + SystemInfo.getDate() +  ": " + input.substring(nthOccurrence(input, " ", 2)));
+					client.getSendingData().writeObject(new DataPacket("message", selfClient.getClientName(), client.getClientName(), "From " + "[" + args[1] + " ] " + SystemInfo.getDate() +  ": " + input.substring(nthOccurrence(input, " ", 2)), null));
 				} catch (IOException e) {
 					debugPrint(e.getStackTrace()[0].toString());
 				}
@@ -158,7 +157,7 @@ public class CommandParser {
 		} else if (command.equalsIgnoreCase("*!link:")) {
 			if (client.getClientName().equalsIgnoreCase(args[1]) || args[1].equals("all")) {
 				try {
-					client.getSendingData().writeUTF("/linkopen" + input.substring(input.indexOf(" ")));
+					client.getSendingData().writeObject(new DataPacket("command", selfClient.getClientName(), client.getClientName(), "/linkopen" + input.substring(input.indexOf(" ")), null));
 				} catch (IOException e) {
 					debugPrint(e.getStackTrace()[0].toString());
 				}
@@ -166,7 +165,7 @@ public class CommandParser {
 		} else if (command.equalsIgnoreCase("*!users:")) {
 			if (client.getClientName().equalsIgnoreCase(args[1])) {
 				try {
-					client.getSendingData().writeUTF("Connected users: " + client.getServer().getUsers().stream().map(e -> e.getCC().getClientName()).collect(Collectors.toList()).toString());
+					client.getSendingData().writeObject(new DataPacket("message", selfClient.getClientName(), client.getClientName(), "Connected users: " + client.getServer().getUsers().stream().map(e -> e.getCC().getClientName()).collect(Collectors.toList()).toString(), null));
 				} catch (IOException e) {
 					debugPrint(e.getStackTrace()[0].toString());
 				}
@@ -175,7 +174,7 @@ public class CommandParser {
 			if (client.getClientName().equalsIgnoreCase(args[2]) || args[2].equals("all")) {
 				try {
 					debugPrint("Received a *!sendfile, sending a /getfile");
-					client.getSendingData().writeUTF("/getfile" + input.substring(input.indexOf(" ")));
+					client.getSendingData().writeObject(new DataPacket("command", selfClient.getClientName(), client.getClientName(), "/getfile" + input.substring(input.indexOf(" ")), null));
 					selfClient.sendFile(input);
 				} catch (IOException e) {
 					debugPrint(e.getStackTrace()[0].toString());
@@ -184,7 +183,7 @@ public class CommandParser {
 		} else if (command.equalsIgnoreCase("*!declineDL:")) {
 			if (client.getClientName().equalsIgnoreCase(args[1])) {
 				try {
-					client.getSendingData().writeUTF("/declineDL" + input.substring(input.indexOf(" ")));
+					client.getSendingData().writeObject(new DataPacket("command", selfClient.getClientName(), client.getClientName(), "/declineDL" + input.substring(input.indexOf(" ")), null));
 				} catch (IOException e) {
 					debugPrint(e.getStackTrace()[0].toString());
 				}
@@ -193,7 +192,7 @@ public class CommandParser {
 			if (client.getClientName().equalsIgnoreCase(args[2]) || args[2].equals("all")) {
 				try {
 					debugPrint("Received a *!sendimg, sending a /getimg");
-					client.getSendingData().writeUTF("/getimg" + input.substring(input.indexOf(" ")));
+					client.getSendingData().writeObject(new DataPacket("command", selfClient.getClientName(), client.getClientName(), "/getimg" + input.substring(input.indexOf(" ")), null));
 					selfClient.sendImg(input);
 				} catch (IOException e) {
 					debugPrint(e.getStackTrace()[0].toString());
@@ -202,7 +201,7 @@ public class CommandParser {
 		} else if (command.equalsIgnoreCase("*!declineimg:")) {
 			if (client.getClientName().equalsIgnoreCase(args[1])) {
 				try {
-					client.getSendingData().writeUTF("/declineimg" + input.substring(input.indexOf(" ")));
+					client.getSendingData().writeObject(new DataPacket("command", selfClient.getClientName(), client.getClientName(), "/declineimg" + input.substring(input.indexOf(" ")), null));
 				} catch (IOException e) {
 					debugPrint(e.getStackTrace()[0].toString());
 				}
@@ -210,7 +209,7 @@ public class CommandParser {
 		} else if (command.equalsIgnoreCase("*!youtube")) {
 			if (client.getClientName().equalsIgnoreCase(args[1]) || args[1] .equalsIgnoreCase("all")) {
 				try {
-					client.getSendingData().writeUTF("/youtubeplay" + input.substring(input.indexOf(" ")));
+					client.getSendingData().writeObject(new DataPacket("command", selfClient.getClientName(), client.getClientName(), "/youtubeplay" + input.substring(input.indexOf(" ")), null));
 				} catch (IOException e) {
 					debugPrint(e.getStackTrace()[0].toString());
 				}
@@ -226,5 +225,5 @@ public class CommandParser {
 			client.getServer().killUser(args[1], input.split("'")[1]);
 		}
 	}
-	
+
 }

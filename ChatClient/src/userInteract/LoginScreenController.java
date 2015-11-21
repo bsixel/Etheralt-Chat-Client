@@ -21,6 +21,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
+import tools.DataPacket;
 import tools.FileHandler;
 import tools.SystemInfo;
 
@@ -313,7 +314,7 @@ public class LoginScreenController {
 			e.consume();
 			if (Popups.startConfDlg("Are you sure you want to exit?")) {
 				try {
-					this.mainController.getClient().getClientSendingData().writeUTF("*![System] " + SystemInfo.getDate() + ": " + this.mainController.getClient().getClientName() + " has disconnected.");
+					this.mainController.getClient().sendMessage("*![System] " + SystemInfo.getDate() + ": " + this.mainController.getClient().getClientName() + " has disconnected.");
 					FileHandler.writeToChatLog("[System] " + SystemInfo.getDate() + ": "
 							+ this.mainController.getClient().getClientName() + " has disconnected.");
 					this.mainController.getClient().setRunning(false);

@@ -1,5 +1,10 @@
 package server;
 
+import java.io.IOException;
+
+import tools.DataPacket;
+import tools.FileHandler;
+
 /*
  * User object used to store information about the remote client.
  * @author Ben Sixel
@@ -90,6 +95,32 @@ public class User {
 	 */
 	public String toString() {
 		return this.displayName;
+	}
+	
+	/**
+	 * Writes a message data packet through the user's client connection.
+	 * @param The message to send.
+	 */
+	public void sendMessage(String msg) {
+		try {
+			this.getCC().getSendingData().writeObject(new DataPacket("message", this.displayName, "all", msg, null));
+		} catch (IOException e) {
+			e.printStackTrace();
+			FileHandler.debugPrint("Error sending message from " + this.displayName);
+		}
+	}
+	
+	/**
+	 * Writes a command data packet through the user's client connection.
+	 * @param The message to send.
+	 */
+	public void sendCommand(String msg) {
+		try {
+			this.getCC().getSendingData().writeObject(new DataPacket("command", this.displayName, msg.split(" ")[1], msg, null));
+		} catch (IOException e) {
+			e.printStackTrace();
+			FileHandler.debugPrint("Error sending command from " + this.displayName);
+		}
 	}
 	
 }

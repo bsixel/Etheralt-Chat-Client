@@ -1,19 +1,18 @@
 package client;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 
 import javafx.application.Platform;
-import sun.audio.AudioPlayer;
-import sun.audio.AudioStream;
 import tools.CommandParser;
+import tools.DataPacket;
 import tools.FileHandler;
 import userInteract.LoginScreenController;
 import userInteract.Popups;
+import static tools.FileHandler.debugPrint;
 
 /*
  * 
@@ -34,25 +33,16 @@ import userInteract.Popups;
  */
 
 public class Client {
-	
+
 	//booleans
 	private boolean running = true;
 	private boolean admin = false;
-	
+
 	//Objects
 	private Socket textSocket;
-	private DataInputStream textInData;
-	private DataOutputStream textOutData;
-	private Socket DLSocket;
-	private DataInputStream DLInData;
-	private DataOutputStream DLOutData;
-	private Socket voiceSocket;
-	private DataInputStream voiceInData;
-	private DataOutputStream voiceOutData;
-	private Socket picSocket;
-	private DataInputStream picInData;
-	private DataOutputStream picOutData;
-	
+	private ObjectInputStream recevingData;
+	private ObjectOutputStream sendingData;
+
 	//Strings
 	private String clientName;
 
@@ -64,32 +54,26 @@ public class Client {
 	 * @param password The password used to connect to the remote server.
 	 * @param lock An object used to lock the UI thread until login is either successful or timed out.
 	 * @throws IOException If connection is lost to the remote server and somehow not caught by the many catches within.
+	 * @throws ClassNotFoundException If there is an unknown object type read from the input stream.
 	 */
-	public void startClient(String IP, int port, LoginScreenController ls, String password, Object lock) throws IOException {
-		
+	public void startClient(String IP, int port, LoginScreenController ls, String password, Object lock) throws IOException, ClassNotFoundException {
+
 		this.textSocket = new Socket(InetAddress.getByName(IP), port);
-		this.textInData = new DataInputStream(this.textSocket.getInputStream());
-		this.textOutData = new DataOutputStream(this.textSocket.getOutputStream());
-		this.DLSocket = new Socket(InetAddress.getByName(IP), port + 1);
-		this.DLInData = new DataInputStream(this.DLSocket.getInputStream());
-		this.DLOutData = new DataOutputStream(this.DLSocket.getOutputStream());
-		this.voiceSocket = new Socket(InetAddress.getByName(IP), port + 2);
-		this.voiceInData = new DataInputStream(this.voiceSocket.getInputStream());
-		this.voiceOutData = new DataOutputStream(this.voiceSocket.getOutputStream());
-		this.picSocket = new Socket(InetAddress.getByName(IP), port + 3);
-		this.picInData = new DataInputStream(this.picSocket.getInputStream());
-		this.picOutData = new DataOutputStream(this.picSocket.getOutputStream());
-		
+		this.sendingData = new ObjectOutputStream(this.textSocket.getOutputStream());
+		this.recevingData = new ObjectInputStream(this.textSocket.getInputStream());
+		System.out.println("Client 61");
+
 		String editedName = ls.getUsernameField().getText();
 		int n = 1;
 		while (true) {
-			
+
 			if (password.equalsIgnoreCase("")) {
-				this.textOutData.writeUTF("*!givename: " + editedName.trim() + " " + FileHandler.getProperty("computer_ID") + " default");
+				this.sendingData.writeObject(new DataPacket("message", "all", "all", "*!givename: " + editedName.trim() + " " + FileHandler.getProperty("computer_ID") + " default", null));
 			} else {
-				this.textOutData.writeUTF("*!givename: " + editedName.trim() + " " + FileHandler.getProperty("computer_ID") + " " + password);
+				this.sendingData.writeObject(new DataPacket("message", "all", "all", "*!givename: " + editedName.trim() + " " + FileHandler.getProperty("computer_ID") + " " + password, null));
 			}
-			String input = this.textInData.readUTF().trim();
+			DataPacket packet = (DataPacket) this.recevingData.readObject();
+			String input = packet.getMessage();
 			FileHandler.debugPrint("Input: " + input);
 			if (input.equalsIgnoreCase("*!decline:password")) {
 				FileHandler.debugPrint("Declined password: " + password);
@@ -122,54 +106,52 @@ public class Client {
 			}
 		}
 		ls.setLocked(false);
-		
-		Thread audioThread = new Thread(() -> {
-			try {
-				InputStream stream = this.voiceInData;
-				AudioStream audioStream = new AudioStream(stream);
-				AudioPlayer.player.start(audioStream);
-			} catch (Exception e) {
-				if (!this.running) {
-					FileHandler.debugPrint("Probably closed the client, still working on graceful audio shutdown.");
-				}
-			}
-		});
-		audioThread.setDaemon(true);
-		audioThread.start();
-		try {
-		while (this.running) {
-			
-			String previous = null;
-			String input = this.textInData.readUTF().trim();
-			
-			if (input != null && !input.equalsIgnoreCase(previous)) {
-				
-				if (input.startsWith("*![System") || input.startsWith("*![Server")) {
-					String phrase = input.trim().substring(input.trim().indexOf("!") + 1);
-					ls.getMainController().addMessage(phrase, "blue", "black");
 
-				} else if (input.startsWith("/") || input.startsWith("*!")) {
+		try {
+
+			PacketHandler packetHandler = new PacketHandler(ls);
+
+			while (this.running) {
+
+				String previous = null;
+				DataPacket packet;
+				if ((packet = (DataPacket) this.recevingData.readObject()) == null) {
+					continue;
+				}
+				String input = packet.getMessage();
+
+				if (packet.getType().equals("dlpacket")) {
+					packetHandler.feedDLPack(packet);
+					continue;
+				} else if (packet.getType().equals("imgpacket")) {
+					packetHandler.feedImgPacket(packet);
+					continue;
+				} else if (packet.getType().equals("audiopacket")) {
+					packetHandler.feedAudioPacket(packet);
+					continue;
+				} else if (packet.getType().equals("voicepacket")) {
+					packetHandler.feedVoicePacket(packet);
+					continue;
+				} else if (packet.getType().equals("command")) {
 					Platform.runLater(() -> {
 						CommandParser.parse(input, ls.getMainController());
 					});
-				} else if (input.split(" ")[0].equalsIgnoreCase("[" + this.clientName + "]")) {
-					ls.getMainController().addMessage(input, "indigo", "black");
-				} else {
-					ls.getMainController().addMessage(input, "darkviolet", "black");
-				}
+				} else if (packet.getType().equals("message") && !input.equalsIgnoreCase(previous)) {
+					if (input.startsWith("*![System") || input.startsWith("*![Server")) {
+						String phrase = input.trim().substring(input.trim().indexOf("!") + 1);
+						ls.getMainController().addMessage(phrase, "blue", "black");
+					}else if (packet.getFrom().startsWith("[" + this.clientName + "]")) {
+						ls.getMainController().addMessage(input, "indigo", "black");
+					} else {
+						ls.getMainController().addMessage(input, "darkviolet", "black");
+					}
 
+				}
+				previous = input;
 			}
-			previous = input;
-		}
-		FileHandler.debugPrint("Stopped running client.");
-		this.DLInData.close();
-		this.DLOutData.close();
-		this.voiceInData.close();
-		this.voiceOutData.close();
-		this.picInData.close();
-		this.picOutData.close();
-		this.textInData.close();
-		this.textOutData.close();
+			FileHandler.debugPrint("Stopped running client.");
+			this.recevingData.close();
+			this.sendingData.close();
 		} catch (java.io.EOFException e) {
 			Platform.runLater(() -> {
 				ls.getMainController().logout();
@@ -177,15 +159,25 @@ public class Client {
 				Popups.startInfoDlg("Kicked from server!", "Kicked from server: " + System.lineSeparator() + "Server closed or lost connection.");
 			});
 			FileHandler.debugPrint("You probably just closed the chat client window. Eventually I'll figure out how to make it gracefully shut down.");
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 
 	/**
 	 * Getter for the client's text sending stream.
-	 * @return The DataOutputStream used for sending chat text from the client.
+	 * @return The ObjectOutputStream used for sending chat text from the client.
 	 */
-	public DataOutputStream getClientSendingData() {
-		return textOutData;
+	public ObjectOutputStream getSendingStream() {
+		return sendingData;
+	}
+
+	/**
+	 * Getter for the client's text receiving stream.
+	 * @return The ObjectOutputStream used for sending chat text from the client.
+	 */
+	public ObjectInputStream getRecevingStream() {
+		return recevingData;
 	}
 
 	/**
@@ -197,60 +189,20 @@ public class Client {
 	}
 
 	/**
-	 * Getter for the client's file transfer receiving stream.
-	 * @return The DataInputStream used for receiving file transfers.
-	 */
-	public DataInputStream getDLInData() {
-		return DLInData;
-	}
-
-	/**
-	 * Getter for the client's file transfer sending stream.
-	 * @return The DataInputStream used for sending file transfers.
-	 */
-	public DataOutputStream getDLOutData() {
-		return DLOutData;
-	}
-
-	/**
-	 * Getter for the client's out stream of audio data.
-	 * @return The DataOutputStream associated with audio data.
-	 */
-	public DataOutputStream getVoiceOutData() {
-		return voiceOutData;
-	}
-
-	/**
-	 * Getter for the client's image input stream.
-	 * @return The DataInputStream associated with the client's image data.
-	 */
-	public DataInputStream getPicInData() {
-		return picInData;
-	}
-
-	/**
-	 * Getter for the client's image output stream.
-	 * @return The DataOutputStream associated with the client's image data.
-	 */
-	public DataOutputStream getPicOutData() {
-		return picOutData;
-	}
-
-	/**
 	 * The getter for the client's name.
 	 * @return The client's name.
 	 */
 	public String getClientname() {
 		return clientName;
 	}
-	
+
 	/**
 	 * Returns a string representation of the client. In this case, the client's name.
 	 */
 	public String toString() {
 		return clientName;
 	}
-	
+
 	/**
 	 * Sets whether or not the client is running (sending/receiving data).
 	 * @param b A boolean value: True if running.
@@ -274,5 +226,33 @@ public class Client {
 	public void setAdmin(boolean admin) {
 		this.admin = admin;
 	}
-	
+
+	/**
+	 * Sends a simple text message through this client.
+	 * @param message The message to send.
+	 */
+	public void sendMessage(String message) {
+		try {
+			this.sendingData.writeObject(new DataPacket("message", this.clientName, "all", message, null));
+		} catch (IOException e) {
+			debugPrint("Error sending message data packet!");
+//			debugPrint(e.getStackTrace()[0].toString());
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Sends a command message through this client.
+	 * @param message The message to send.
+	 */
+	public void sendCommand(String message) {
+		String[] args = message.split(" ");
+		try {
+			this.sendingData.writeObject(new DataPacket("command", this.clientName, args[1], message, null));
+		} catch (IOException e) {
+			debugPrint("Error sending message data packet!");
+			debugPrint(e.getStackTrace()[0].toString());
+		}
+	}
+
 }

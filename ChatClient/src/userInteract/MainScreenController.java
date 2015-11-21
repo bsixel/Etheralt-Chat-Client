@@ -344,7 +344,7 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 					}
 				} else {
 					try {
-						this.getClient().getClientSendingData().writeUTF(this.getChatField().getText().trim());
+						this.getClient().sendMessage(this.getChatField().getText().trim());
 						prevInput.add(this.getChatField().getText());
 						this.getChatField().clear();
 					} catch (Exception e) {
@@ -496,10 +496,9 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 	 */
 	public void logout() {
 		try {
-			this.getClient().getClientSendingData().writeUTF("*![System] " + SystemInfo.getDate() + ": " + this.getClient().getClientName() + " has disconnected.");
+			this.getClient().sendMessage("*![System] " + SystemInfo.getDate() + ": " + this.getClient().getClientName() + " has disconnected.");
 			FileHandler.writeToChatLog("[System] " + SystemInfo.getDate() + ": " + this.getClient().getClientName() + " has disconnected.");
-			this.getClient().getClientSendingData().writeUTF("*!disconnect " + this.client.getClientName() + " 'Client disconnected.'");
-			System.out.println("Yeah here.");
+			this.getClient().sendCommand("*!disconnect " + this.client.getClientName() + " 'Client disconnected.'");
 			getClient().setRunning(false);
 			this.clientThread.interrupt();
 		} catch (Exception e) {

@@ -58,12 +58,13 @@ public class Server {
 			this.server = new ServerSocket(port);
 			this.DLServer = new ServerSocket(port + 1);
 			this.VoiceServer = new ServerSocket(port + 2);
+			this.picServer = new ServerSocket(port + 3);
 			debugPrint("Server started successfully.");
 			FileHandler.saveProperties(this);
 			System.out.println("Saved server preferences.");
 			System.out.print("> ");
 			while (true) {
-				ClientConnection client = new ClientConnection(server.accept(), DLServer.accept(), VoiceServer.accept(), picServer.accept(), clientID++, this);
+				ClientConnection client = new ClientConnection(server.accept(), clientID++, this);
 				Thread clientThread = new Thread(() -> {
 					System.out.println("Adding new client!");
 					client.startConnection();
@@ -100,7 +101,8 @@ public class Server {
 			System.out.println("Saved server preferences.");
 			System.out.print("> ");
 			while (true) {
-				ClientConnection client = new ClientConnection(server.accept(), DLServer.accept(), VoiceServer.accept(), picServer.accept(), clientID++, this);
+				ClientConnection client = new ClientConnection(server.accept(), clientID++, this);
+				System.out.println("Server 105");
 				Thread clientThread = new Thread(() -> {
 					System.out.println("Adding new client!");
 					client.startConnection();
@@ -137,7 +139,7 @@ public class Server {
 			System.out.println("Saved server preferences.");
 			System.out.print("> ");
 			while (true) {
-				ClientConnection client = new ClientConnection(server.accept(), DLServer.accept(), VoiceServer.accept(), picServer.accept(), clientID++, this);
+				ClientConnection client = new ClientConnection(server.accept(), clientID++, this);
 				Thread clientThread = new Thread(() -> {
 					System.out.println("Adding new client!");
 					client.startConnection();
@@ -169,13 +171,11 @@ public class Server {
 			User u;
 			synchronized (u = iter.next()) {
 				if (u.getDisplayName().equalsIgnoreCase(name)) {
-					debugPrint("Killed user " + u.getDisplayName());
 					try {
+						u.sendCommand("/kicked: '" + reason + "'");
 						CommandParser.parse("/updateusers", this);
-						u.getCC().getSendingData().writeUTF("/kicked: '" + reason + "'");
-						u.getCC().getDLSocket().close();
 						u.getCC().getSocket().close();
-						u.getCC().getVoiceSocket().close();
+						debugPrint("Killed user " + u.getDisplayName());
 					} catch (Exception e) {
 						debugPrint(e.getStackTrace()[0].toString());
 					}

@@ -48,10 +48,10 @@ public class PacketHandler {
 	private HashMap<String, TempFile> inProgressFiles= new HashMap<String, TempFile>();
 
 	//Objects
-	private Server server;
+	//private Server server;
 	
 	public PacketHandler(Server server) {
-		this.server = server;
+		//this.server = server;
 	}
 
 	/**

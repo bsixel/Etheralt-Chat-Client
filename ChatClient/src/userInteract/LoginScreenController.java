@@ -21,7 +21,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
-import tools.DataPacket;
 import tools.FileHandler;
 import tools.SystemInfo;
 

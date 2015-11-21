@@ -118,12 +118,14 @@ public class Client {
 				if ((packet = (DataPacket) this.recevingData.readObject()) == null) {
 					continue;
 				}
+				System.out.println("Got some sort of packet...");
 				String input = packet.getMessage();
 
 				if (packet.getType().equals("dlpacket")) {
 					packetHandler.feedDLPack(packet);
 					continue;
 				} else if (packet.getType().equals("imgpacket")) {
+					System.out.println("Got an image packet!");
 					packetHandler.feedImgPacket(packet);
 					continue;
 				} else if (packet.getType().equals("audiopacket")) {

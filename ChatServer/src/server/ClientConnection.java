@@ -152,7 +152,7 @@ public class ClientConnection {
 					break;
 				}
 
-				if (packet.getType().equals("dlpacket") || packet.getType().equals("audiopacket") || packet.getType().equals("voicepacket")) {
+				if (packet.getType().equals("dlpacket") || packet.getType().equals("imgpacket") || packet.getType().equals("audiopacket") || packet.getType().equals("voicepacket")) {
 					getServer().getUsers().forEach(u -> {
 						if (packet.getTarget().equalsIgnoreCase("all") || packet.getTarget().equalsIgnoreCase(u.getDisplayName())) {
 							try {
@@ -253,118 +253,6 @@ public class ClientConnection {
 				}
 			}
 		}
-
-	}
-
-	/**
-	 * Thread started when a client requests a download/file transfer.
-	 * @param input The string input from the remote client containing destination and file length.
-	 * @return A thread used for receiving/sending data for file transfers.
-	 * @throws Exception if there is a connection problem between the sending and receiving clients.
-	 */
-	public Thread genDLThread(String input) throws Exception {
-		Thread dlThread = new Thread(() -> {
-			byte[] buffer = new byte[8192];
-			String[] args = input.split(" ");
-			long length = Long.parseLong(args[4]);
-			try {
-				long total = 0;
-				while (total != length) {
-					int dlcount = 0;
-					//dlcount = this.DLAcceptedData.read(buffer, 0, 8192);
-					total += dlcount;
-					getServer().getUsers().stream().map(u -> u.getCC()).forEach(e -> {
-						if (e.clientName.equalsIgnoreCase(args[2]) || args[2].equalsIgnoreCase("all")) {
-							try {
-								//e.DLSendingData.write(buffer, 0, dlcount);
-							} catch (Exception e1) {
-								debugPrint("Error sending file data from " + this.clientName + " to " + args[2] + ".");
-								debugPrint(e1.getStackTrace()[0].toString());
-							}
-						}
-					});
-				}
-
-			} catch (Exception e1) {
-				debugPrint("Error sending file data from " + this.clientName + " to " + args[2] + ".");
-				debugPrint(e1.getStackTrace()[0].toString());
-				Thread.currentThread().interrupt();
-			}
-			Thread.currentThread().interrupt();
-		});
-		return dlThread;
-	}
-
-	/**
-	 * Thread started when a client requests an image download/transfer.
-	 * @param input The string input from the remote client containing destination and file length.
-	 * @return A thread used for receiving/sending data for image transfers.
-	 * @throws Exception if there is a connection problem between the sending and receiving clients.
-	 */
-	public Thread genPicThread(String input) throws Exception {
-		Thread picThread = new Thread(() -> {
-			byte[] buffer = new byte[8192];
-			String[] args = input.split(" ");
-			long length = Long.parseLong(args[4]);
-			try {
-				long total = 0;
-				while (total != length) {
-					int piccount = 0;
-					//piccount = this.picAcceptedData.read(buffer, 0, 8192);
-					total += piccount;
-					getServer().getUsers().stream().map(u -> u.getCC()).forEach(e -> {
-						if (e.clientName.equalsIgnoreCase(args[2]) || args[2].equalsIgnoreCase("all")) {
-							try {
-								//e.picSendingData.write(buffer, 0, piccount);
-							} catch (Exception e1) {
-								debugPrint("Error sending image data from " + this.clientName + " to " + args[2] + ".");
-								debugPrint(e1.getStackTrace()[0].toString());
-							}
-						}
-					});
-				}
-
-			} catch (Exception e1) {
-				debugPrint("Error sending image data from " + this.clientName + " to " + args[2] + ".");
-				debugPrint(e1.getStackTrace()[0].toString());
-				Thread.currentThread().interrupt();
-			}
-			Thread.currentThread().interrupt();
-		});
-		return picThread;
-	}
-
-	/** Method used to initiate file sending.
-	 * Uses the input from the remote client to determine file size and destination.
-	 * @param input The input from the remote client containing destination and file length.
-	 */
-	public void sendFile(String input) {
-
-		Thread dlThread = null;
-		try {
-			dlThread = genDLThread(input);
-		} catch (Exception e1) {
-			debugPrint(e1.getStackTrace()[0].toString());
-		}
-		dlThread.setDaemon(true);
-		dlThread.start();
-
-	}
-
-	/** Method used to initiate image sending.
-	 * Uses the input from the remote client to determine file size and destination.
-	 * @param input The input from the remote client containing destination and file length.
-	 */
-	public void sendImg(String input) {
-
-		Thread picThread = null;
-		try {
-			picThread = genPicThread(input);
-		} catch (Exception e1) {
-			debugPrint(e1.getStackTrace()[0].toString());
-		}
-		picThread.setDaemon(true);
-		picThread.start();
 
 	}
 

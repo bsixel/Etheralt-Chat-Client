@@ -105,7 +105,6 @@ public class User {
 		try {
 			this.getCC().getSendingData().writeObject(new DataPacket("message", this.displayName, "all", msg, null));
 		} catch (IOException e) {
-			e.printStackTrace();
 			FileHandler.debugPrint("Error sending message from " + this.displayName);
 		}
 	}
@@ -118,7 +117,6 @@ public class User {
 		try {
 			this.getCC().getSendingData().writeObject(new DataPacket("command", this.displayName, msg.split(" ")[1], msg, null));
 		} catch (IOException e) {
-			e.printStackTrace();
 			FileHandler.debugPrint("Error sending command from " + this.displayName);
 		}
 	}

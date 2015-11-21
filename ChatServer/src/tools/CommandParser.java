@@ -170,30 +170,10 @@ public class CommandParser {
 					debugPrint(e.getStackTrace()[0].toString());
 				}
 			}
-		} else if (command.equalsIgnoreCase("*!sendfile:")) {
-			if (client.getClientName().equalsIgnoreCase(args[2]) || args[2].equals("all")) {
-				try {
-					debugPrint("Received a *!sendfile, sending a /getfile");
-					client.getSendingData().writeObject(new DataPacket("command", selfClient.getClientName(), client.getClientName(), "/getfile" + input.substring(input.indexOf(" ")), null));
-					selfClient.sendFile(input);
-				} catch (IOException e) {
-					debugPrint(e.getStackTrace()[0].toString());
-				}
-			}
 		} else if (command.equalsIgnoreCase("*!declineDL:")) {
 			if (client.getClientName().equalsIgnoreCase(args[1])) {
 				try {
 					client.getSendingData().writeObject(new DataPacket("command", selfClient.getClientName(), client.getClientName(), "/declineDL" + input.substring(input.indexOf(" ")), null));
-				} catch (IOException e) {
-					debugPrint(e.getStackTrace()[0].toString());
-				}
-			}
-		} else if (command.equalsIgnoreCase("*!sendimg:")) {
-			if (client.getClientName().equalsIgnoreCase(args[2]) || args[2].equals("all")) {
-				try {
-					debugPrint("Received a *!sendimg, sending a /getimg");
-					client.getSendingData().writeObject(new DataPacket("command", selfClient.getClientName(), client.getClientName(), "/getimg" + input.substring(input.indexOf(" ")), null));
-					selfClient.sendImg(input);
 				} catch (IOException e) {
 					debugPrint(e.getStackTrace()[0].toString());
 				}

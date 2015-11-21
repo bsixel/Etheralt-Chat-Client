@@ -81,7 +81,7 @@ public class PacketHandler {
 			inProgressFiles.get(args[0] + " from " + packet.getFrom()).finalize();
 			inProgressFiles.remove(args[0] + " from " + packet.getFrom());
 			Platform.runLater(() -> {
-				if (Popups.startConfDlg("Completed download of " + args[0])) {
+				if (Popups.startConfDlg("Completed download of " + args[0] + ". Open file?")) {
 					try {
 						Desktop.getDesktop().open(new File(FileHandler.downloadsPath + "/" + args[0]));
 					} catch (Exception e) {
@@ -107,11 +107,13 @@ public class PacketHandler {
 		} else if (args[1].equalsIgnoreCase("end")) {
 			inProgressFiles.get(args[0] + " from " + packet.getFrom()).finalize();
 			inProgressFiles.remove(args[0] + " from " + packet.getFrom());
-			try {
-				ls.getMainController().getImages().getChildren().add(new ImageView(new Image(new FileInputStream(FileHandler.picturesPath + "/" + args[0]))));
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			}
+			Platform.runLater(() -> {
+				try {
+					ls.getMainController().getImages().getChildren().add(new ImageView(new Image(new FileInputStream(FileHandler.picturesPath + "/" + args[0]))));
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
+				}
+			});
 		}
 	}
 

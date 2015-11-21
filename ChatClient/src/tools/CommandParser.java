@@ -2,7 +2,6 @@ package tools;
 
 import java.awt.Desktop;
 import java.io.File;
-import java.io.IOException;
 import java.net.URI;
 import java.util.stream.Collectors;
 
@@ -57,38 +56,12 @@ public class CommandParser {
 		String[] args = input.split(" ");
 		String command = args[0];
 
-		if (command.equalsIgnoreCase("/getfile")) {
-			System.out.println("Kinda getting file from " + args[1] + ", checking target...");
-			if (sc.getClient().getClientName().equalsIgnoreCase(args[2]) || args[2].equals("all")) {
-
-				if (Popups.startConfDlg("Accept file from " + args[1] + "?")) {
-					File file = Popups.startFileSaver("Select a download location.", args[3].substring(args[3].lastIndexOf(".") + 1), args[3]);
-					Thread thread = new Thread(FileHandler.dlFile(sc, file, Integer.parseInt(args[4])));
-					thread.setDaemon(true);
-					sc.getDlThreads().add(thread);
-					thread.start();
-				} else {
-					try {
-						sc.getClient().getClientSendingData().writeUTF("*!declineDL: " + args[1] + " " + args[3]);
-					} catch (IOException e) {
-						FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
-					}
-				}
-			}
-		} else if (command.equalsIgnoreCase("/declineDL")) {
+		if (command.equalsIgnoreCase("/declineDL")) {
 			sc.getDlThreads().forEach(e -> {
 				if (e.getName().equalsIgnoreCase("DLThread for " + args[1])) {
 					e.interrupt();
 				}
 			});
-		} else if (command.equalsIgnoreCase("/getimg")) {
-			if (sc.getClient().getClientName().equalsIgnoreCase(args[2]) || args[2].equals("all")) {
-				File file = new File(FileHandler.picturesPath + "/" + args[3]);
-				Thread thread = new Thread(FileHandler.dlPic(sc, file, Integer.parseInt(args[4])));
-				thread.setDaemon(true);
-				sc.getDlThreads().add(thread);
-				thread.start();
-			}
 		} else if (command.equalsIgnoreCase("/declineimg")) {
 			sc.getDlThreads().forEach(e -> {
 				if (e.getName().equalsIgnoreCase("PicThread for " + args[1])) {
@@ -131,12 +104,8 @@ public class CommandParser {
 			Popups.startInfoDlg("Kicked from server!", "Kicked from server: " + System.lineSeparator() + input.split("'")[1]);
 		} else if (command.equals("*!tell:")) {
 			if (sc.getClient().getClientName().equalsIgnoreCase(args[2]) || args[2].equals("all")) {
-				try {
-					System.out.println("Message sent from " + args[1] + " to " + args[2]);
-					sc.getClient().getClientSendingData().writeUTF("From " + "[" + args[1] + " ] " + SystemInfo.getDate() +  ": " + input.substring(nthOccurrence(input, " ", 2)));
-				} catch (IOException e) {
-					FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
-				}
+				System.out.println("Message sent from " + args[1] + " to " + args[2]);
+				sc.getClient().sendMessage("From " + "[" + args[1] + " ] " + SystemInfo.getDate() +  ": " + input.substring(nthOccurrence(input, " ", 2)));
 			}
 		} else if (command.equalsIgnoreCase("*!admind")) {
 			sc.getClient().setAdmin(true);
@@ -175,7 +144,7 @@ public class CommandParser {
 			try {
 				String toSend = "*!tell: " + sc.getClient().getClientName() + " " + message;
 				System.out.println("To send: " + toSend);
-				sc.getClient().getClientSendingData().writeUTF(toSend);
+				sc.getClient().sendCommand(toSend);
 				sc.addMessage("To " + System.lineSeparator() + "[" + args[1] + "] " + SystemInfo.getDate() + ": " + message.substring(message.indexOf(" ") + 1), "green", "black");
 				sc.getChatField().clear();
 			} catch (Exception e) {
@@ -190,20 +159,12 @@ public class CommandParser {
 			sc.getChatField().clear();
 			new File(FileHandler.chatLogPath).delete();
 		} else if (command.equalsIgnoreCase("/link")) {
-			try {
-				sc.addMessage("Linked " + args[1] + " to " + args[2] + ".", "blue", "black");
-				sc.getClient().getClientSendingData().writeUTF("*!link: " + args[1] + input.substring(nthOccurrence(input, " ", 1)));
-				sc.getChatField().clear();
-			} catch (IOException e) {
-				FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
-			}
+			sc.addMessage("Linked " + args[1] + " to " + args[2] + ".", "blue", "black");
+			sc.getClient().sendCommand("*!link: " + args[1] + input.substring(nthOccurrence(input, " ", 1)));
+			sc.getChatField().clear();
 		} else if (command.equalsIgnoreCase("/users")) {
-			try {
-				sc.getClient().getClientSendingData().writeUTF("*!users: " + sc.getClient().getClientName());
-				sc.getChatField().clear();
-			} catch (IOException e) {
-				FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
-			}
+			sc.getClient().sendCommand("*!users: " + sc.getClient().getClientName());
+			sc.getChatField().clear();
 		} else if (command.equalsIgnoreCase("/sendfile")) {
 			sendFile(input, sc);
 		} else if (command.equalsIgnoreCase("/img")) {
@@ -220,11 +181,7 @@ public class CommandParser {
 				FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
 			}
 		} else if (command.equalsIgnoreCase("/youtube")) {
-			try {
-				sc.getClient().getClientSendingData().writeUTF("*!youtube" + input.substring(input.indexOf(" ")));
-			} catch (IOException e) {
-				FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
-			}
+			sc.getClient().sendCommand("*!youtube" + input.substring(input.indexOf(" ")));
 			sc.getChatField().clear();
 		} else if (command.equalsIgnoreCase("/clearmedia")) {
 			sc.getChatField().clear();
@@ -250,18 +207,14 @@ public class CommandParser {
 			Platform.runLater(() -> {
 				File file = Popups.startFileOpener("Select audio file to transmit.");
 				Thread audioThread = new Thread(() -> {
-					FileHandler.transmitAudio(sc, file);
+					FileHandler.transmitAudio(sc.getClient(), file);
 				});
 				audioThread.setDaemon(true);
 				audioThread.start();
 			});
 
 		} else if (command.equalsIgnoreCase("/kick") && sc.getClient().isAdmin()) {
-			try {
-				sc.getClient().getClientSendingData().writeUTF("*!kick " + args[1] + " '" + input.split("'")[1] + "'");
-			} catch (IOException e) {
-				FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
-			}
+			sc.getClient().sendCommand("*!kick " + args[1] + " '" + input.split("'")[1] + "'");
 		}
 
 	}

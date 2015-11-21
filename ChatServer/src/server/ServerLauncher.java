@@ -70,7 +70,7 @@ public class ServerLauncher {
 			} else if (!input.startsWith("*")) {			//Sends non-command input to connected clients as chat.
 				server.getUsers().forEach(u -> {
 					try {
-						u.getCC().getSendingData().writeUTF("*![Server] " + SystemInfo.getDate() + ": " + input);
+						u.sendMessage("*![Server] " + SystemInfo.getDate() + ": " + input);
 					} catch (Exception e) {
 						debugPrint(e.getStackTrace()[0].toString());
 					}

@@ -16,6 +16,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
+import java.util.Arrays;
 import java.util.Properties;
 import java.util.UUID;
 
@@ -454,7 +455,7 @@ public class FileHandler {
 				byte[] fileBuffer = new byte[8192];
 				fileOut = new FileOutputStream(file);
 				while (total != length) {
-					count = sc.getClient().getDLInData().read(fileBuffer, 0, 8192);
+					//count = sc.getClient().getRecevingStream().readObject(fileBuffer, 0, 8192);
 					total += count;
 					fileOut.write(fileBuffer, 0, count);
 					fileOut.flush();
@@ -472,7 +473,7 @@ public class FileHandler {
 				});
 				Thread.currentThread().interrupt();
 			} catch (IOException e) {
-				Platform.runLater(() ->Popups.startInfoDlg("Download Error", "Failed to download file!"));
+				Platform.runLater(() -> Popups.startInfoDlg("Download Error", "Failed to download file!"));
 				FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
 				debugPrint("Failed send count: " + count);
 			}
@@ -496,14 +497,17 @@ public class FileHandler {
 				byte[] fileBuffer = new byte[8192];
 				FileInputStream fileStream = new FileInputStream(file);
 				String name = file.getName().replaceAll(" ", "_");
-				
-				client.getClientSendingData().writeUTF("*!sendfile: " + client.getClientName() + " " + target + " " + name + " " + file.length());
-				
-				while ((count = fileStream.read(fileBuffer, 0, 8192)) > 0) {
-					client.getDLOutData().write(fileBuffer, 0, count);
-					client.getDLOutData().flush();
+				long fileLength = file.length();
+				long total = 0;
+				client.getSendingStream().writeObject(new DataPacket("dlpacket", client.getClientName(), target, name + " start " + fileLength, null));
+				long packetnum = 1;
+				while (total != fileLength) {
+					count = fileStream.read(fileBuffer, 0, 8192);
+					client.getSendingStream().writeObject(new DataPacket("dlpacket", client.getClientName(), target, name + " transfer " + count + " " + packetnum++, Arrays.copyOf(fileBuffer, count)));
+					total += count;
 				}
-				client.getDLOutData().flush();
+				System.err.println("Sending finished after " + (packetnum - 1) + " packets. Total length: " + total + " Target: " + fileLength);
+				client.getSendingStream().writeObject(new DataPacket("dlpacket", client.getClientName(), target, name + " end " + total, null));
 				fileStream.close();
 				Thread.currentThread().interrupt();
 			} catch (Exception e) {
@@ -532,8 +536,8 @@ public class FileHandler {
 				fileOut = new FileOutputStream(file);
 				while (total != length) {
 					FileHandler.writeToErrorLog("Testing logging. Also debugging that img thing. Length: " + length + "; count: " + count + "; Total: " + total + " (this was the first go)");
-					FileHandler.writeToErrorLog("Testing logging. Also debugging that img thing. Available?: " + sc.getClient().getPicInData().available());
-					count = sc.getClient().getPicInData().read(fileBuffer, 0, 8192);
+					//FileHandler.writeToErrorLog("Testing logging. Also debugging that img thing. Available?: " + sc.getClient().getPicInData().available());
+					//count = sc.getClient().getPicInData().read(fileBuffer, 0, 8192);
 					total += count;
 					FileHandler.writeToErrorLog("Testing logging. Also debugging that img thing. Length: " + length + "; count: " + count + "; Total: " + total + " (this was the second go)");
 					fileOut.write(fileBuffer, 0, count);
@@ -577,18 +581,23 @@ public class FileHandler {
 				byte[] fileBuffer = new byte[8192];
 				FileInputStream fileStream = new FileInputStream(file);
 				String name = file.getName().replaceAll(" ", "_");
-				client.getClientSendingData().writeUTF("*!sendimg: " + client.getClientName() + " " + target + " " + name + " " + file.length());
-				while ((count = fileStream.read(fileBuffer, 0, 8192)) > 0) {
-					client.getPicOutData().write(fileBuffer, 0, count);
-					client.getPicOutData().flush();
+				long fileLength = file.length();
+				long total = 0;
+				client.getSendingStream().writeObject(new DataPacket("imgpacket", client.getClientName(), target, name + " start " + fileLength, null));
+				long packetnum = 1;
+				while (total != fileLength) {
+					count = fileStream.read(fileBuffer, 0, 8192);
+					client.getSendingStream().writeObject(new DataPacket("imgpacket", client.getClientName(), target, name + " transfer " + count + " " + packetnum++, Arrays.copyOf(fileBuffer, count)));
+					total += count;
 				}
-				client.getPicOutData().flush();
+				System.err.println("Sending finished after " + (packetnum - 1) + " packets. Total length: " + total + " Target: " + fileLength);
+				client.getSendingStream().writeObject(new DataPacket("imgpacket", client.getClientName(), target, name + " end " + total, null));
 				fileStream.close();
 				Thread.currentThread().interrupt();
 			} catch (Exception e) {
 				Platform.runLater(() -> Popups.startInfoDlg("Download Error", "Failed to send file!"));
 				FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
-				System.out.println("Failed send count: " + count);
+				debugPrint("Failed send count: " + count);
 			}
 		};
 		return run;
@@ -599,17 +608,16 @@ public class FileHandler {
 	 * @param sc The screen controller whose client to use for sending the file.
 	 * @param file The file whose audio is being transmitted.
 	 */
-	public static void transmitAudio(MainScreenController sc, File file) {
-		Client client = sc.getClient();
+	public static void transmitAudio(Client client, File file) {
 		int count = 1;
 		try {
 			byte[] fileBuffer = new byte[8192];
 			FileInputStream fileStream = new FileInputStream(file);
+			client.getSendingStream().writeObject(new DataPacket("audiopacket", client.getClientName(), "all", "start", fileBuffer));
 			while ((count = fileStream.read(fileBuffer, 0, 8192)) > 0) {
-				client.getVoiceOutData().write(fileBuffer, 0, count);
-				client.getVoiceOutData().flush();
+				client.getSendingStream().writeObject(new DataPacket("audiopacket", client.getClientName(), "all", "transfer " + count, fileBuffer));
 			}
-			client.getVoiceOutData().flush();
+			client.getSendingStream().writeObject(new DataPacket("audiopacket", client.getClientName(), "all", "end", fileBuffer));
 			fileStream.close();
 			Thread.currentThread().interrupt();
 		} catch (Exception e) {

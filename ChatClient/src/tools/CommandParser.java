@@ -109,6 +109,15 @@ public class CommandParser {
 			}
 		} else if (command.equalsIgnoreCase("*!admind")) {
 			sc.getClient().setAdmin(true);
+		} else if (command.equalsIgnoreCase("*!kick")) {
+			sc.logout();
+			Platform.runLater(() -> {
+				System.out.println(input);
+				for (String s:input.split("'")) {
+					System.out.println(s);
+				}
+				Popups.startInfoDlg("Kicked from server", "Kicked from server: " + input.split("'")[1]);
+			});
 		} else if (command.equalsIgnoreCase("*!link:")) {
 			try {
 				if (sc.getClient().getClientName().equalsIgnoreCase(args[1]) || args[1].equals("all")) {

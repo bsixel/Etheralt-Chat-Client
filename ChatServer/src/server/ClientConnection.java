@@ -123,8 +123,8 @@ public class ClientConnection {
 			 */
 			getServer().getUsers().forEach(u -> {
 				try {
-					this.getSendingData().writeObject(new DataPacket("message", "all", "all", "*![System] " + SystemInfo.getDate() + ": " + getClientName() + " has connected.", null));
-					this.getSendingData().writeObject(new DataPacket("command", "all", "all", "/updateusers " + str, null));
+					u.getCC().getSendingData().writeObject(new DataPacket("message", "all", "all", "*![System] " + SystemInfo.getDate() + ": " + getClientName() + " has connected.", null));
+					u.getCC().getSendingData().writeObject(new DataPacket("command", "all", "all", "/updateusers " + str, null));
 				} catch (Exception e) {
 					debugPrint("Error notifying of new connection: " + e.getStackTrace()[0]);
 				}

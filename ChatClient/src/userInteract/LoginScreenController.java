@@ -314,9 +314,7 @@ public class LoginScreenController {
 			e.consume();
 			if (Popups.startConfDlg("Are you sure you want to exit?")) {
 				try {
-					this.mainController.getClient().sendMessage("*![System] " + SystemInfo.getDate() + ": " + this.mainController.getClient().getClientName() + " has disconnected.");
-					FileHandler.writeToChatLog("[System] " + SystemInfo.getDate() + ": "
-							+ this.mainController.getClient().getClientName() + " has disconnected.");
+					FileHandler.writeToChatLog("[System] " + SystemInfo.getDate() + ": " + this.mainController.getClient().getClientName() + " has disconnected.");
 					this.mainController.getClient().setRunning(false);
 				} catch (Exception e1) {
 					if (window.getScene().equals(chatScreen)) {

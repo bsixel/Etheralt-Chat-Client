@@ -109,6 +109,8 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 		
 		new File(FileHandler.downloadsPath).mkdirs();
 		new File(FileHandler.picturesPath).mkdirs();
+		new File(FileHandler.chatLogPath).createNewFile();
+		new File(FileHandler.errorLogPath).createNewFile();
 		this.layout = layout;
 		this.window = window;
 		FileHandler.readLog(this.getChatBox());

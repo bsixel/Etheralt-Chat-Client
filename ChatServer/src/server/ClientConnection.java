@@ -151,7 +151,8 @@ public class ClientConnection {
 					Thread.currentThread().interrupt();
 					break;
 				}
-
+				
+				//Packet distribution
 				if (packet.getType().equals("dlpacket") || packet.getType().equals("imgpacket") || packet.getType().equals("audiopacket") || packet.getType().equals("voicepacket")) {
 					getServer().getUsers().forEach(u -> {
 						if (packet.getTarget().equalsIgnoreCase("all") || packet.getTarget().equalsIgnoreCase(u.getDisplayName())) {
@@ -163,16 +164,20 @@ public class ClientConnection {
 						}
 					});
 				} else if (packet.getType().equals("command")) {
-					getServer().getUsers().forEach(u -> {
-						if (packet.getTarget().equalsIgnoreCase("all") || packet.getTarget().equalsIgnoreCase(u.getDisplayName())) {
-							try {
-								CommandParser.parse(received, u.getCC(), this);
-							} catch (Exception ex) {
-								debugPrint("Error while parsing command: " + received);
-								debugPrint(ex.getStackTrace()[0].toString());
+					try {
+						getServer().getUsers().forEach(u -> {
+							if (packet.getTarget().equalsIgnoreCase("all") || packet.getTarget().equalsIgnoreCase(u.getDisplayName())) {
+								try {
+									CommandParser.parse(received, u.getCC(), this);
+								} catch (Exception ex) {
+									debugPrint("Error while parsing command: " + received);
+									debugPrint(ex.getStackTrace()[0].toString());
+								}
 							}
-						}
-					});
+						});
+					} catch (ConcurrentModificationException e) {
+						debugPrint("Tried modifying the user list on multiple threads - ClientConnection under packet detection, command distribution.");
+					}
 				} else if (packet.getType().equals("message")) {
 					if (received == null || received == "") {
 						continue;

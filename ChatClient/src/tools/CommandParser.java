@@ -145,7 +145,7 @@ public class CommandParser {
 				String toSend = "*!tell: " + sc.getClient().getClientName() + " " + message;
 				System.out.println("To send: " + toSend);
 				sc.getClient().sendCommand(toSend);
-				sc.addMessage("To " + System.lineSeparator() + "[" + args[1] + "] " + SystemInfo.getDate() + ": " + message.substring(message.indexOf(" ") + 1), "green", "black");
+				sc.addMessage("To " + args[1] + " [" + args[1] + "] " + SystemInfo.getDate() + ": " + message.substring(message.indexOf(" ") + 1), "green", "black");
 				sc.getChatField().clear();
 			} catch (Exception e) {
 				FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());

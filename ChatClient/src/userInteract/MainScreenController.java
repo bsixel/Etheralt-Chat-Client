@@ -498,7 +498,6 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 	 */
 	public void logout() {
 		try {
-			this.getClient().sendMessage("*![System] " + SystemInfo.getDate() + ": " + this.getClient().getClientName() + " has disconnected.");
 			FileHandler.writeToChatLog("[System] " + SystemInfo.getDate() + ": " + this.getClient().getClientName() + " has disconnected.");
 			this.getClient().sendCommand("*!disconnect " + this.client.getClientName() + " 'Client disconnected.'");
 			getClient().setRunning(false);

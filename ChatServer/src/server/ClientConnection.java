@@ -123,8 +123,8 @@ public class ClientConnection {
 			 */
 			getServer().getUsers().forEach(u -> {
 				try {
-					this.getSendingData().writeObject(new DataPacket("message", "all", "all", "*![System] " + SystemInfo.getDate() + ": " + getClientName() + " has connected.", null));
-					this.getSendingData().writeObject(new DataPacket("command", "all", "all", "/updateusers " + str, null));
+					u.getCC().getSendingData().writeObject(new DataPacket("message", "all", "all", "*![System] " + SystemInfo.getDate() + ": " + getClientName() + " has connected.", null));
+					u.getCC().getSendingData().writeObject(new DataPacket("command", "all", "all", "/updateusers " + str, null));
 				} catch (Exception e) {
 					debugPrint("Error notifying of new connection: " + e.getStackTrace()[0]);
 				}
@@ -219,7 +219,7 @@ public class ClientConnection {
 				}
 				if (!u.getDisplayName().equals(clientName)) {
 					try {
-						u.getCC().getSendingData().writeObject("/updateusers " + str);
+						u.sendCommand("/updateusers " + str);
 						u.sendMessage("*![System] " + SystemInfo.getDate() + ": " + getClientName() + " has disconnected.");
 					} catch (Exception e1) {
 						debugPrint("Error sending disconnect message for " + this.clientName + ".");

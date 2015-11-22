@@ -51,7 +51,7 @@ public class Server {
 	 * @throws IOException Thrown if the server loses a network connection.
 	 */
 	public void startServer(int port, String password) throws IOException {
-		this.password = password;
+		this.setPassword(password);
 		FileHandler.generateConfigFile();
 		
 		try {
@@ -88,7 +88,7 @@ public class Server {
 	public void startServer() throws IOException {
 		FileHandler.generateConfigFile();
 		int port = Integer.parseInt(FileHandler.getProperty("last_port"));
-		this.password = FileHandler.getProperty("last_password");
+		this.setPassword(FileHandler.getProperty("last_password"));
 		
 		try {
 			
@@ -275,6 +275,14 @@ public class Server {
 	 */
 	public int getPortStart() {
 		return server.getLocalPort();
+	}
+
+	/**
+	 * Sets the server password. Should only be called by the /password command in the command parser.
+	 * @param password The password to which the password is being set.
+	 */
+	public void setPassword(String password) {
+		this.password = password;
 	}
 	
 }

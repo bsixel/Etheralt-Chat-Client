@@ -48,10 +48,14 @@ public class CommandParser {
 		String command = args[0];
 
 		if (command.equalsIgnoreCase("/admin")) {
+			if (args.length < 2) {
+				debugPrint("Unable to parse command. Correct syntax: /admin <user>");
+				return;
+			}
 			server.getUsers().forEach(u -> {
 				if (u.getDisplayName().equalsIgnoreCase(args[1])) {
 					try {
-						u.sendCommand("*!admind");
+						u.sendCommand("*!admind Morthaden");
 						String currAdmins = FileHandler.getProperty("admins");
 						if (currAdmins == null || currAdmins.equals("")) {
 							currAdmins = "";
@@ -65,6 +69,7 @@ public class CommandParser {
 						System.out.println("Added " + args[1] + " as admin!");
 						u.setAdmin(true);
 					} catch (Exception e) {
+						e.printStackTrace();
 						debugPrint("Failed to add " + args[1] + " as admin!");
 						debugPrint(e.getStackTrace()[0].toString());
 					}
@@ -76,11 +81,21 @@ public class CommandParser {
 				System.out.println(u.getDisplayName() + ":" + u.getID());
 			});
 		} else if (command.equalsIgnoreCase("/password")) {
-			System.out.println("Password: '" + server.getPassword() + "'");
+			if (args.length == 2) {
+				server.setPassword(args[1]);
+				System.out.println("New password: " + args[1]);
+			} else {
+				System.out.println("Password: '" + server.getPassword() + "'");
+			}
 		} else if (command.equalsIgnoreCase("/stop")) {
+			FileHandler.saveProperties(server);
 			debugPrint("Shutting down server.");
 			System.exit(0);
 		} else if (command.equalsIgnoreCase("/kick")) {
+			if (args.length < 2) {
+				debugPrint("Unable to parse command. Correct syntax: /kick <user> <reason>");
+				return;
+			}
 			try {
 				server.killUser(args[1], input.split("'")[1]);
 			} catch (Exception e) {

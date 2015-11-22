@@ -57,6 +57,7 @@ public class LoginScreenController {
 	// Strings
 	private String loginString = "Please enter your display name.";
 	private String username;
+	public String reason = "";
 
 	// Scene
 	private Stage window;
@@ -213,7 +214,7 @@ public class LoginScreenController {
 			this.username = getUsernameField().getText();
 			this.getMainController().getUsernameLabel().setText(" Logged in as " + this.username + " ");
 			String pass = Popups.startPasswdDlg("Enter server password:");
-			Object lock = new Object();
+			String lock = "";
 			
 			//Runnable for starting the connection to the remote server.
 			Runnable startClient = () -> {
@@ -248,13 +249,13 @@ public class LoginScreenController {
 				}
 			}
 			if (this.nameTaken) {
-				Popups.startInfoDlg("Connection error!", "Unable to connect to server:" + System.lineSeparator() + "Incorrect password/Username taken.");
+				Popups.startInfoDlg("Connection error!", "Unable to connect to server:" + System.lineSeparator() + reason);
 				FileHandler.debugPrint("Connection error! Unable to connect to server: Incorrect password/Username taken.");
 				return;
 			}
 			if (isStopped()) {
-				Popups.startInfoDlg("Connection error!", "Unable to connect to server: " + System.lineSeparator() + "Connection refused or incorrect password.");
-				FileHandler.debugPrint("Connection error! Unable to connect to server: Connection refused or incorrect password.");
+				Popups.startInfoDlg("Connection error!", "Unable to connect to server: " + System.lineSeparator() + reason);
+				FileHandler.debugPrint("Connection error! Unable to connect to server: " + reason);
 				return;
 			}
 			this.mainController.scrollToBottom();

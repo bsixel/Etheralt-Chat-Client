@@ -154,8 +154,16 @@ public class FileHandler {
 	public static boolean initUserPrefs() {
 		
 		try {
+			
+			new File(FileHandler.downloadsPath).mkdirs();
+			new File(FileHandler.picturesPath).mkdirs();
+			
 			File configFile = new File(configPath);
 			configFile.createNewFile();
+
+			File debugFile = new File(errorLogPath);
+			debugFile.createNewFile();
+			
 			InputStream configReader = new FileInputStream(configFile);
 			Properties defaultProperties = new Properties();
 			
@@ -212,8 +220,13 @@ public class FileHandler {
 			writer.close();
 			printer.close();
 		} catch (IOException e) {
-			FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
-			FileHandler.debugPrint(errorLogPath);
+			e.printStackTrace();
+			try {
+				new File(errorLogPath).createNewFile();
+				FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
+				FileHandler.debugPrint(errorLogPath);
+			} catch (IOException e1) {
+			}
 		}
 		
 	}

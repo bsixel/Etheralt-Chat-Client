@@ -56,7 +56,7 @@ public class Client {
 	 * @throws IOException If connection is lost to the remote server and somehow not caught by the many catches within.
 	 * @throws ClassNotFoundException If there is an unknown object type read from the input stream.
 	 */
-	public void startClient(String IP, int port, LoginScreenController ls, String password, Object lock) throws IOException, ClassNotFoundException {
+	public void startClient(String IP, int port, LoginScreenController ls, String password, String lock) throws IOException, ClassNotFoundException {
 
 		this.textSocket = new Socket(InetAddress.getByName(IP), port);
 		this.sendingData = new ObjectOutputStream(this.textSocket.getOutputStream());
@@ -80,6 +80,7 @@ public class Client {
 				ls.setLocked(false);
 				ls.setNameTaken(true);
 				synchronized (lock) {
+					ls.reason = "Declined password: " + password;
 					lock.notifyAll();
 				}
 			}
@@ -88,6 +89,7 @@ public class Client {
 				ls.setLocked(false);
 				ls.setNameTaken(true);
 				synchronized (lock) {
+					ls.reason = "Declined username: already taken.";
 					lock.notifyAll();
 				}
 			}

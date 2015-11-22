@@ -5,7 +5,6 @@ import javafx.scene.Scene;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import tools.FileHandler;
 import userInteract.LoginScreenController;
 import userInteract.MainScreenController;
 
@@ -58,8 +57,10 @@ public class ChatClient extends Application {
 			this.mainScene.getStylesheets().add(getClass().getResource("cyprus.css").toExternalForm());
 			primaryStage.setScene(loginScene);
 			primaryStage.show();
-	} catch(Exception e) {
-		FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
+		} catch(Exception e) {
+			//FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
+			e.printStackTrace();
+			System.exit(-1);
 		}
 	}
 

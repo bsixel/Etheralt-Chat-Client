@@ -120,7 +120,6 @@ public class Client {
 				if ((packet = (DataPacket) this.recevingData.readObject()) == null) {
 					continue;
 				}
-				System.out.println("Got some sort of packet...");
 				String input = packet.getMessage();
 
 				if (packet.getType().equals("dlpacket")) {

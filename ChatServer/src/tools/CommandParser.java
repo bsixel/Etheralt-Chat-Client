@@ -92,12 +92,17 @@ public class CommandParser {
 			debugPrint("Shutting down server.");
 			System.exit(0);
 		} else if (command.equalsIgnoreCase("/kick")) {
-			if (args.length < 2) {
+			if (args.length < 3) {
 				debugPrint("Unable to parse command. Correct syntax: /kick <user> <reason>");
 				return;
 			}
 			try {
-				server.killUser(args[1], input.split("'")[1]);
+				//server.killUser(args[1], input.split("'")[1]);
+				server.getUsers().forEach(u -> {
+					if (u.getDisplayName().equalsIgnoreCase(args[1])) {
+						u.sendCommand("*!kick '" + input.split("'")[1] + "'");
+					}
+				});
 			} catch (Exception e) {
 				debugPrint(e.getStackTrace()[0].toString());
 				debugPrint("Error! Input = " + input);

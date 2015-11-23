@@ -1,10 +1,8 @@
 package tools;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,7 +12,7 @@ import java.util.Properties;
 
 import server.Server;
 
-/**
+/*
  * 
  * @author Ben Sixel
  * FileHandler class. Deals with system files: 
@@ -29,19 +27,22 @@ public class FileHandler {
 	
 	/**
 	 * Static method to print a message to both the console and the error/debug log.
-	 * @param msg
+	 * @param msg The message being printed/saved.
 	 */
 	public static void debugPrint(String msg) {
-		System.out.println(msg);
-		writeToErrorLog(msg);
+		String fnlMsg = SystemInfo.getFullDate() + ": " + msg;
+		System.err.println(fnlMsg);
+		System.err.print("> ");
+		writeToErrorLog(fnlMsg);
 	}
 	
 	/**
 	 * Static method to print a message to both the console and the chat log.
-	 * @param msg
+	 * @param msg The message being printed/saved.
 	 */
 	public static void chatPrint(String msg) {
 		System.out.println(msg);
+		System.out.print("> ");
 		writeToChatLog(msg);
 	}
 	
@@ -61,16 +62,16 @@ public class FileHandler {
 				
 			}
 		} catch (IOException e) {
-			System.out.println(configPath);
-			e.printStackTrace();
+			debugPrint("Error generating config file: " + configPath);
+			debugPrint(e.getStackTrace()[0].toString());
 		}
 		
 	}
 	
 	/**
 	 * Gets a property from the server properties file.
-	 * @param property
-	 * @return
+	 * @param property The name of the desired property.
+	 * @return The valuen of the desired property from the properties file.
 	 */
 	public static String getProperty(String property) {
 		String res = null;
@@ -82,12 +83,12 @@ public class FileHandler {
 			properties.load(fileStream);
 			res = properties.getProperty(property);
 		} catch (IOException e) {
-			e.printStackTrace();
+			debugPrint(e.getStackTrace()[0].toString());
 		} finally {
 			try {
 				fileStream.close();
 			} catch (IOException e) {
-				e.printStackTrace();
+				debugPrint(e.getStackTrace()[0].toString());
 			}
 		}
 		return res;
@@ -96,8 +97,8 @@ public class FileHandler {
 	
 	/**
 	 * Sets a property in the server properties file.
-	 * @param property
-	 * @param value
+	 * @param property The property being set.
+	 * @param value The value (as a string) we are giving the property.
 	 */
 	public static void setProperty(String property, String value) {
 		try {
@@ -109,7 +110,7 @@ public class FileHandler {
 			properties.store(writer, "Saved user info");
 			writer.close();
 		} catch (IOException e) {
-			e.printStackTrace();
+			debugPrint(e.getStackTrace()[0].toString());
 		}
 		
 	}
@@ -133,7 +134,7 @@ public class FileHandler {
 			configReader.close();
 			
 		} catch (IOException e) {
-			e.printStackTrace();
+			debugPrint(e.getStackTrace()[0].toString());
 		}
 		
 		
@@ -141,7 +142,7 @@ public class FileHandler {
 	
 	/**
 	 * Used for writing messages to the server's chat log.
-	 * @param message
+	 * @param message The message to be saved to the chat log.
 	 */
 	public static void writeToChatLog(String message){
 		
@@ -153,15 +154,15 @@ public class FileHandler {
 			writer.close();
 			printer.close();
 		} catch (IOException e) {
-			System.out.println(chatLogPath);
-			e.printStackTrace();
+			debugPrint("Error writing to chat log: " + chatLogPath);
+			debugPrint(e.getStackTrace()[0].toString());
 		}
 		
 	}
 	
 	/**
 	 * Used for writing messages to the server's error/debug log.
-	 * @param message
+	 * @param message The message to be saved to the error log.
 	 */
 	public static void writeToErrorLog(String message){
 		
@@ -173,59 +174,15 @@ public class FileHandler {
 			writer.close();
 			printer.close();
 		} catch (IOException e) {
-			System.out.println(chatLogPath);
-			e.printStackTrace();
+			debugPrint("Error writing to chat log: " + errorLogPath);
+			debugPrint(e.getStackTrace()[0].toString());
 		}
 		
 	}
 	
 	/**
-	 * 
-	 * @return
-	 * @throws IOException
-	 */
-	public static int getLogLength() throws IOException {
-		int n = 0;
-		
-		FileReader file = new FileReader(chatLogPath);
-		BufferedReader reader = new BufferedReader(file);
-		
-		while (reader.readLine() != null) {
-			n++;
-		}
-		
-		file.close();
-		reader.close();
-		
-		return n;
-		
-	}
-	
-	/**
-	 * Returns the length of the config file. Exists in case it is needed later.
-	 * @return
-	 * @throws IOException
-	 */
-	public static int getConfigLength() throws IOException {
-		int n = 0;
-		
-		FileReader file = new FileReader(configPath);
-		BufferedReader reader = new BufferedReader(file);
-		
-		while (reader.readLine() != null) {
-			n++;
-		}
-		
-		file.close();
-		reader.close();
-		
-		return n;
-		
-	}
-	
-	/**
-	 * Stores the properties for a given server object.
-	 * @param server
+	 * Stores the properties for a given server object in the properties file.
+	 * @param server The server whose properties we are saving to file.
 	 */
 	public static void saveProperties(Server server) {
 		
@@ -235,12 +192,18 @@ public class FileHandler {
 			Properties properties = new Properties();
 			properties.setProperty("last_port", ((Integer) server.getPortStart()).toString());
 			properties.setProperty("last_password", server.getPassword());
-			
+			String prevAdmins = getProperty("admins");
+			if (prevAdmins != null) {
+				properties.setProperty("admins", prevAdmins);
+			} else {
+				properties.setProperty("admins", "");
+			}
 			OutputStream writer = new FileOutputStream(configFile);
 			properties.store(writer, "Saved user info");
 			writer.close();
 		} catch (IOException e) {
-			e.printStackTrace();
+			debugPrint("Error writing to config file: " + configPath);
+			debugPrint(e.getStackTrace()[0].toString());
 		}
 		
 	}

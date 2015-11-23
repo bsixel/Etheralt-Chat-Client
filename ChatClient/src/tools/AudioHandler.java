@@ -1,19 +1,35 @@
 package tools;
 
 import java.io.File;
-import java.io.IOException;
 
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.DataLine;
-import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.TargetDataLine;
 
 import client.Client;
 
 
+
+/*
+ * 
+ * @author Ben Sixel
+ *   Copyright 2015 Benjamin Sixel
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+ */
 
 public class AudioHandler {
 	
@@ -22,23 +38,35 @@ public class AudioHandler {
 	private AudioFileFormat.Type fileType = AudioFileFormat.Type.WAVE;
 	private TargetDataLine mic;
 	private byte[] audioBuffer = new byte[10000];
-	private Client client;
+	//private Client client;
+	private Thread voice;
 	
+	/**
+	 * Default contructor for and AudioHandler. Takes in a client to use for incoming/outgoing streams.
+	 * @param client Client to use for incoming/outgoing streams.
+	 */
 	public AudioHandler(Client client) {
-		this.client = client;
+		//this.client = client;
 	}
 
-	AudioFormat getAudioFormat() {
+	/**
+	 * A method used for getting a workable audio format for recording.
+	 * @return An AudioFormat used for recording.
+	 */
+	public static AudioFormat getAudioFormat() {
 		float sampleRate = 16000;
 		int sampleSizeInBits = 8;
 		int channels = 2;
 		boolean signed = true;
 		boolean bigEndian = true;
-		AudioFormat format = new AudioFormat(sampleRate, sampleSizeInBits,
-				channels, signed, bigEndian);
+		AudioFormat format = new AudioFormat(sampleRate, sampleSizeInBits, channels, signed, bigEndian);
 		return format;
 	}
 
+	/**
+	 * Starts the recording process.
+	 * @param record A boolean for whether or not the audio should be saved to the system.
+	 */
 	public void start(boolean record) {
 		try {
 			AudioFormat format = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED, 44100.0F, 16, 2, 4, 44100.0F, false);
@@ -53,16 +81,16 @@ public class AudioHandler {
 			mic.start();
 
 			AudioInputStream ais = new AudioInputStream(mic);
-			mic.read(audioBuffer, 0, 10000);
+			mic.read(audioBuffer, 0, (int) RECORD_TIME);
 			
 			
-			Thread voice = new Thread(() -> {
+			voice = new Thread(() -> {
 				while (true) {
 					try {
-						this.client.getVoiceOutData().write(audioBuffer);
+						//this.client.getVoiceOutData().write(audioBuffer);
 					} catch (Exception e) {
 						System.out.println("Voice chat failed: unable to send voice bytes.");
-						e.printStackTrace();
+						FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
 					}
 				}
 			});
@@ -77,13 +105,14 @@ public class AudioHandler {
 				AudioSystem.write(ais, fileType, soundFile);
 			}
 
-		} catch (LineUnavailableException ex) {
-			ex.printStackTrace();
-		} catch (IOException ioe) {
-			ioe.printStackTrace();
+		} catch (Exception e) {
+			FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
 		}
 	}
 
+	/**
+	 * Stops the recording process.
+	 */
 	public void stop() {
 		mic.stop();
 		mic.close();

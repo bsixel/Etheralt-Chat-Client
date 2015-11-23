@@ -4,15 +4,16 @@ import static tools.FileHandler.debugPrint;
 
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import tools.CommandParser;
 import tools.FileHandler;
 
-/**
+/*
  * 
  * @author Ben Sixel
  * The main server object. Controls general server maintenance, although it is not in charge of taking user import server-side.
@@ -44,33 +45,32 @@ public class Server {
 	private ServerSocket picServer;
 	
 	/**
-	 * Starts the server with the desired port and password. Also takes in the System.out of the main thread in case some change is made which affects the way java handles printing to the console.
-	 * @param port
-	 * @param password
-	 * @param out
-	 * @throws IOException
+	 * Starts the server with the desired port and password.
+	 * @param port The initial port with which we should attempt to start the server.
+	 * @param password The password we will use to secure the server.
+	 * @throws IOException Thrown if the server loses a network connection.
 	 */
 	public void startServer(int port, String password) throws IOException {
-		this.password = password;
+		this.setPassword(password);
 		FileHandler.generateConfigFile();
 		
 		try {
 			this.server = new ServerSocket(port);
 			this.DLServer = new ServerSocket(port + 1);
 			this.VoiceServer = new ServerSocket(port + 2);
+			this.picServer = new ServerSocket(port + 3);
 			debugPrint("Server started successfully.");
 			FileHandler.saveProperties(this);
 			System.out.println("Saved server preferences.");
 			System.out.print("> ");
 			while (true) {
-				ClientConnection client = new ClientConnection(server.accept(), DLServer.accept(), VoiceServer.accept(), picServer.accept(), clientID++, this);
+				ClientConnection client = new ClientConnection(server.accept(), clientID++, this);
 				Thread clientThread = new Thread(() -> {
 					System.out.println("Adding new client!");
 					client.startConnection();
 				});
 				clientThread.setDaemon(true);
 				clientThread.start();
-				
 			}
 			
 		} finally {
@@ -83,12 +83,12 @@ public class Server {
 	
 	/**
 	 * Starts the server with the last port and the last password used, stored in the properties file.
-	 * @throws IOException
+	 * @throws IOException Thrown if the server loses a network connection.
 	 */
 	public void startServer() throws IOException {
 		FileHandler.generateConfigFile();
 		int port = Integer.parseInt(FileHandler.getProperty("last_port"));
-		this.password = FileHandler.getProperty("last_password");
+		this.setPassword(FileHandler.getProperty("last_password"));
 		
 		try {
 			
@@ -101,7 +101,8 @@ public class Server {
 			System.out.println("Saved server preferences.");
 			System.out.print("> ");
 			while (true) {
-				ClientConnection client = new ClientConnection(server.accept(), DLServer.accept(), VoiceServer.accept(), picServer.accept(), clientID++, this);
+				ClientConnection client = new ClientConnection(server.accept(), clientID++, this);
+				System.out.println("Server 105");
 				Thread clientThread = new Thread(() -> {
 					System.out.println("Adding new client!");
 					client.startConnection();
@@ -121,7 +122,7 @@ public class Server {
 	
 	/**
 	 * Starts the server with the default port (25566) and password ('default' or none).
-	 * @throws IOException
+	 * @throws IOException Thrown if the server loses a network connection.
 	 */
 	public void startDefaultServer() throws IOException {
 		FileHandler.generateConfigFile();
@@ -138,7 +139,7 @@ public class Server {
 			System.out.println("Saved server preferences.");
 			System.out.print("> ");
 			while (true) {
-				ClientConnection client = new ClientConnection(server.accept(), DLServer.accept(), VoiceServer.accept(), picServer.accept(), clientID++, this);
+				ClientConnection client = new ClientConnection(server.accept(), clientID++, this);
 				Thread clientThread = new Thread(() -> {
 					System.out.println("Adding new client!");
 					client.startConnection();
@@ -148,6 +149,8 @@ public class Server {
 				
 			}
 			
+		}catch (Exception e) {
+			e.printStackTrace();
 		} finally {
 			this.server.close();
 			this.DLServer.close();
@@ -157,57 +160,24 @@ public class Server {
 	}
 	
 	/**
-	 * Some getters and setters.
-	 * @return
-	 */
-
-	public ServerSocket getServer() {
-		return server;
-	}
-
-	public ArrayList<User> getUsersSubList() {
-		return usersSubList;
-	}
-
-	public void setUsersSubList(ArrayList<User> usersSubList) {
-		this.usersSubList = usersSubList;
-	}
-
-	public ObservableList<User> getUsers() {
-		synchronized (users) {
-			return users;
-		}
-	}
-
-	public void setUsers(ObservableList<User> users) {
-		this.users = users;
-	}
-	
-	public void addUser(User user) {
-		this.users.add(user);
-	}
-	
-	/**
 	 * Method for removing users forcefully from the server (kicks, client-side disconnects, etc).
-	 * @param name
-	 * @param reason
+	 * @param name The user being removed.
+	 * @param reason The reason for which the user is being removed.
+	 * @throws ConcurrentModificationException If this process and another are both trying to edit the user list.
 	 */
-	public void killUser(String name, String reason) {
+	public void killUser(String name, String reason) throws ConcurrentModificationException {
 		Iterator<User> iter = getUsers().iterator();
 		while (iter.hasNext()) {
 			User u;
 			synchronized (u = iter.next()) {
 				if (u.getDisplayName().equalsIgnoreCase(name)) {
-					debugPrint("Killed user " + u.getDisplayName());
 					try {
-						u.getCC().getSendingData().writeUTF("/kicked: '" + reason + "'");
-						u.getCC().getDLSocket().close();
+						u.sendCommand("/kicked: '" + reason + "'");
+						CommandParser.parse("/updateusers", this);
 						u.getCC().getSocket().close();
-						u.getCC().getVoiceSocket().close();
-					} catch (SocketException e) {
-						
-					} catch (IOException e) {
-						e.printStackTrace();
+						debugPrint("Killed user " + u.getDisplayName());
+					} catch (Exception e) {
+						debugPrint(e.getStackTrace()[0].toString());
 					}
 				}
 			}
@@ -215,89 +185,104 @@ public class Server {
 		getUsers().removeIf(u -> u.getDisplayName().equalsIgnoreCase(name));
 	}
 	
-	/**
-	 * Another method for removing users forcefully from the server (kicks, client-side disconnects, etc).
-	 * @param name
-	 * @param reason
+	/*
+	 * Some getters and setters.
 	 */
-	public void killUserAuto(String name, String reason) {
-		Iterator<User> iter = getUsers().iterator();
-		while (iter.hasNext()) {
-			User u;
-			synchronized (u = iter.next()) {
-				if (u.getDisplayName().equalsIgnoreCase(name)) {
-					debugPrint("Killed user " + u.getDisplayName());
-					try {
-						u.getCC().getSendingData().writeUTF("/kicked: '" + reason + "'");
-						u.getCC().getDLSocket().close();
-						u.getCC().getSocket().close();
-						u.getCC().getVoiceSocket().close();
-					} catch (SocketException e) {
-						
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-			}
+	
+	/**
+	 * Getter for this server.
+	 * @return This server.
+	 */
+	public ServerSocket getServer() {
+		return server;
+	}
+
+	/**
+	 * Getter for the observable connected users list. Because it is an ObservableList, it can have change notifiers.
+	 * @return An observable list of connected users.
+	 */
+	public ObservableList<User> getUsers() {
+		synchronized (users) {
+			return users;
 		}
-		
 	}
 	
 	/**
-	 * More getters and setters.
-	 * @return
+	 * Adds a user to the list of connected users.
+	 * @param user The user we are adding.
 	 */
-
-	public int getClientID() {
-		return clientID;
-	}
-
-	public void setClientID(int clientID) {
-		this.clientID = clientID;
+	public void addUser(User user) {
+		this.getUsers().add(user);
 	}
 	
+	/**
+	 * Essentially a counter for the number of users that have ever to the server.
+	 * @return The clientID  field value.
+	 */
+	public int getClientID() {
+		return this.clientID;
+	}
+	
+	/**
+	 * Adds one to the {@link clientID} field.
+	 */
 	public void addClientID() {
 		this.clientID ++;
 	}
 	
+	/**
+	 * Subtracts one from the {@link clientID} field.
+	 */
 	public void subClientID() {
 		this.clientID --;
 	}
 
+	/**
+	 * Getter for the standard server socket for file transfers.
+	 * @return The standard server socket for file transfer data.
+	 */
 	public ServerSocket getDLServer() {
 		return DLServer;
 	}
 
-	public void setDLServer(ServerSocket dLServer) {
-		DLServer = dLServer;
-	}
-
+	/**
+	 * Getter for the standard voice server socket.
+	 * @return The standard voice server socket.
+	 */
 	public ServerSocket getVoiceServer() {
 		return VoiceServer;
 	}
 
-	public void setVoiceServer(ServerSocket voiceServer) {
-		VoiceServer = voiceServer;
-	}
-
+	/**
+	 * Getter for the server socket for image data.
+	 * @return The server socket for image data.
+	 */
 	public ServerSocket getPicServer() {
 		return picServer;
 	}
-
-	public void setPicServer(ServerSocket picServer) {
-		this.picServer = picServer;
-	}
-
-	public void setServer(ServerSocket server) {
-		this.server = server;
-	}
 	
+	/**
+	 * Getter for the server's password.
+	 * @return The server's password.
+	 */
 	public String getPassword() {
 		return this.password;
 	}
 
+	/**
+	 * Getter for the starting, local port.
+	 * @return The standard local port for the server.
+	 */
 	public int getPortStart() {
 		return server.getLocalPort();
+	}
+
+	/**
+	 * Sets the server password. Should only be called by the /password command in the command parser.
+	 * @param password The password to which the password is being set.
+	 */
+	public void setPassword(String password) {
+		this.password = password;
 	}
 	
 }

@@ -38,6 +38,12 @@
 	
 }
 
+.stage {
+	-fx-background-color: linear-gradient(to bottom right, reflect, purple 25%, navy,
+black);
+
+}
+
 .label {
 	
 	-fx-background-color: gainsboro;

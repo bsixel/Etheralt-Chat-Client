@@ -7,11 +7,12 @@ import java.util.Scanner;
 
 import tools.CommandParser;
 import tools.FileHandler;
+import tools.SystemInfo;
 
-/**
+/*
  * 
  * @author Ben Sixel
- * Server launcher. Launches the server itself and sends user input from the console to the command parser.
+ * Server launcher. Launches the server itself and sends user input from the console to the command parser, or directly to chat itself.
  *
  */
 
@@ -19,8 +20,8 @@ public class ServerLauncher {
 	
 	/**
 	 * Main method, takes args from console when launched as a String array.
-	 * @param args
-	 * @throws IOException
+	 * @param args Typical launch args taken from console.
+	 * @throws IOException ...Sometime. But hopefully not.
 	 */
 	public static void main(String[] args) throws IOException {
 		
@@ -45,6 +46,7 @@ public class ServerLauncher {
 						server.startDefaultServer();
 					} catch (Exception e2) {
 						debugPrint("Unable to start default server!");
+						debugPrint(e2.getStackTrace()[0].toString());
 						e2.printStackTrace();
 						System.exit(-1);
 					}
@@ -53,8 +55,27 @@ public class ServerLauncher {
 		});
 		serverThread.setDaemon(true);
 		serverThread.start();
+		
+		/*
+		 * Takes user input from the command line for commands and chatting with the connected users.
+		 */
 		while (true) {
-			CommandParser.parse(scanner.nextLine(), server);
+			String input = scanner.nextLine();
+			if (input.startsWith("/")) {					//If the input starts with a '/' send it to the command parser.
+				try {
+					CommandParser.parse(input, server);
+				} catch (Exception e) {
+					debugPrint(e.getStackTrace()[0].toString());
+				}
+			} else if (!input.startsWith("*")) {			//Sends non-command input to connected clients as chat.
+				server.getUsers().forEach(u -> {
+					try {
+						u.sendMessage("*![Server] " + SystemInfo.getDate() + ": " + input);
+					} catch (Exception e) {
+						debugPrint(e.getStackTrace()[0].toString());
+					}
+				});
+			}
 		}
 	}
 

@@ -11,3 +11,6 @@ ChatServer/.project
 **/*.properties
 **/*.log
 *~
+/RemoteSystemsTempFiles/
+ECS_lib/
+ECC_lib/

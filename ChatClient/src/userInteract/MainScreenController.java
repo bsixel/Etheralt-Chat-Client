@@ -283,10 +283,12 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 		});
 		
 		this.folderButton.addEventHandler(ActionEvent.ACTION, e -> {
-			try {
-				Desktop.getDesktop().open(new File(System.getProperty("user.home") + "/Documents/Etheralt Chat Client"));
-			} catch (Exception e1) {
-				FileHandler.debugPrint(e1.getMessage() + e1.getStackTrace()[0].toString());
+			if (!System.getProperties().getProperty("os.name").contains("Linux")) {
+				try {
+					Desktop.getDesktop().open(new File(System.getProperty("user.home") + "/Documents/Etheralt Chat Client"));
+				} catch (Exception e1) {
+					FileHandler.debugPrint(e1.getMessage() + e1.getStackTrace()[0].toString());
+				}
 			}
 		});
 		

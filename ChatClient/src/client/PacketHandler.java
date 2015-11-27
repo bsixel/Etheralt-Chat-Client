@@ -81,7 +81,7 @@ public class PacketHandler {
 			inProgressFiles.get(args[0] + " from " + packet.getFrom()).finalize();
 			inProgressFiles.remove(args[0] + " from " + packet.getFrom());
 			Platform.runLater(() -> {
-				if (Popups.startConfDlg("Completed download of " + args[0] + ". Open file?")) {
+				if (Popups.startConfDlg("Completed download of " + args[0] + ". Open file?") && !System.getProperties().getProperty("os.name").contains("Linux")) {
 					try {
 						Desktop.getDesktop().open(new File(FileHandler.downloadsPath + "/" + args[0]));
 					} catch (Exception e) {

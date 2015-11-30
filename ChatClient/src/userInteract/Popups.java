@@ -66,7 +66,7 @@ public class Popups {
 		popup.initModality(Modality.APPLICATION_MODAL);
 		popup.setResizable(false);
 		popup.setTitle(title);
-		popup.setWidth(250);
+		popup.setWidth(300);
 		popup.setHeight(100);
 		Label infoLabel = new Label();
 		infoLabel.setText(info);
@@ -119,7 +119,7 @@ public class Popups {
 		popup.initModality(Modality.APPLICATION_MODAL);
 		popup.setResizable(false);
 		popup.setTitle("Confirmation Dialog");
-		popup.setWidth(250);
+		popup.setWidth(300);
 		popup.setHeight(115);
 		Label infoLabel = new Label();
 		infoLabel.setText(question);
@@ -170,7 +170,7 @@ public class Popups {
 		popup.initModality(Modality.APPLICATION_MODAL);
 		popup.setResizable(false);
 		popup.setTitle("Confirmation Dialog");
-		popup.setWidth(250);
+		popup.setWidth(300);
 		popup.setHeight(115);
 		Label questionLabel = new Label();
 		questionLabel.setText(question);
@@ -219,7 +219,7 @@ public class Popups {
 		popup.initModality(Modality.APPLICATION_MODAL);
 		popup.setResizable(false);
 		popup.setTitle("Confirmation Dialog");
-		popup.setWidth(250);
+		popup.setWidth(300);
 		popup.setHeight(115);
 		Label questionLabel = new Label();
 		questionLabel.setText(question);

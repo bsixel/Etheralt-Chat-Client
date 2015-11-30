@@ -60,8 +60,6 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 	
 	//Buttons
 	private Button logoutButton;
-	private Button scienceButton = new Button("Science Button!");
-	private Button scrollButton = new Button("Scroll Button");
 	private ToggleButton tb = new ToggleButton("Call");
 	private Button folderButton = new Button("Open Data Folder");
 	private Button sendButton = new Button("Send File");
@@ -133,10 +131,6 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 		this.chatView.setMaxSize(500, 500);
 		this.chatView.hbarPolicyProperty().set(ScrollBarPolicy.NEVER);
 		this.chatView.vbarPolicyProperty().set(ScrollBarPolicy.ALWAYS);
-
-		this.scrollButton.setOnAction(e -> {
-			scrollToBottom();
-		});
 
 	}
 
@@ -223,7 +217,7 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 		GridPane.setConstraints(this.buttonBox, 0, 0);
 		GridPane.setConstraints(this.columnsContainer, 0, 1);
 		this.columnsContainer.getChildren().addAll(this.firstColumn, this.secondColumn);
-		this.buttonBox.getChildren().addAll(this.logoutButton, this.scrollButton, this.folderButton, this.scienceButton, this.tb, this.saveAudio, this.sendButton);
+		this.buttonBox.getChildren().addAll(this.logoutButton, this.folderButton, this.tb, this.saveAudio, this.sendButton);
 		this.firstColumn.getChildren().addAll(this.usernameLabel, this.usersArea, this.chatView, this.chatField);
 		
 		this.currScene.setOnKeyPressed(k -> {
@@ -259,7 +253,6 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 	 * Initiates the extra buttons - namely the experimental science button, the send file button, and the open resources folder button.
 	 */
 	private void initExtraButtons() {
-		this.scienceButton.setId("science");
 		Timeline timeline = new Timeline(new KeyFrame(Duration.millis(100), a -> {
 			if (this.isSpinning) {
 				this.layout.setRotate(this.layout.getRotate() + 10);
@@ -269,14 +262,6 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 		}));
 		timeline.setCycleCount(Animation.INDEFINITE);
 		timeline.play();
-		this.scienceButton.addEventHandler(ActionEvent.ACTION, e -> {
-			try {
-				this.isSpinning = !this.isSpinning;
-			} catch (Exception ex) {
-				System.out.println("Well, that didn't work. Stop trying to break things.");
-				FileHandler.debugPrint(ex.getMessage() + ex.getStackTrace()[0].toString());
-			}
-		});
 		
 		sendButton.addEventHandler(ActionEvent.ACTION, e -> {
 			CommandParser.sendFile("/sendfile all", this);
@@ -483,7 +468,7 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 	 */
 	public void handle(KeyEvent key) {
 		if (key.getCode().equals(KeyCode.PAGE_DOWN)) {
-			this.scrollButton.fire();
+			this.scrollToBottom();
 		}
 	}
 

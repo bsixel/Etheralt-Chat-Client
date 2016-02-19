@@ -27,7 +27,7 @@ public class PacketHandler {
 			try {
 				this.fos = new FileOutputStream(file);
 			} catch (FileNotFoundException e) {
-				e.printStackTrace();
+				FileHandler.debugPrint(e);
 			}
 		}
 		public void write(byte[] bytes, int len) {
@@ -37,7 +37,7 @@ public class PacketHandler {
 			try {
 				this.fos.write(bytes, 0, len);
 			} catch (IOException e) {
-				FileHandler.debugPrint("Error writing to file while downloading: " + file.getAbsolutePath());
+				//FileHandler.debugPrint("Error writing to file while downloading: " + file.getAbsolutePath());
 			}
 		}
 
@@ -51,6 +51,9 @@ public class PacketHandler {
 
 	}
 
+	//Booleans
+	private boolean isReal = true;
+	
 	//Strings
 
 	//Numbers
@@ -71,13 +74,33 @@ public class PacketHandler {
 	 */
 	public void feedDLPack(DataPacket packet) {
 		String[] args = packet.getMessage().split(" ");
-		System.out.println("DLPacket message: " + packet.getMessage());
+		//System.out.println("DLPacket message: " + packet.getMessage());
 
 		if (args[1].equalsIgnoreCase("start")) {
+			FileHandler.debugPrint("Started file receive from " + packet.getFrom() + " named " + args[0]);
 			inProgressFiles.put(args[0] + " from " + packet.getFrom(), new TempFile(new File(FileHandler.downloadsPath + "/" + args[0])));
+			Platform.runLater(() -> {
+				if (!Popups.startConfDlg("Accept file '" + args[0] + "' from " + packet.getFrom() + "?")) {
+					try {
+						this.ls.getMainController().getClient().sendCommand("*!declineDL " + packet.getFrom() + " " + args[0]);
+					} catch (Exception e1) {
+						FileHandler.debugPrint("Error declining download!");
+						FileHandler.debugPrint(e1);
+					}
+					FileHandler.debugPrint("*!declineDL " + args[0]);
+					this.isReal = false;
+					try {
+						inProgressFiles.get(args[0] + " from " + packet.getFrom()).fos.close();
+					} catch (Exception e) {
+						//FileHandler.debugPrint("Error deleting temp file from rejected download!");
+						//FileHandler.debugPrint(e);
+					}
+					inProgressFiles.get(args[0] + " from " + packet.getFrom()).file.delete();
+				}
+			});
 		} else if (args[1].equalsIgnoreCase("transfer")) {
 			inProgressFiles.get(args[0] + " from " + packet.getFrom()).write(packet.getData(), Integer.parseInt(args[2]));
-		} else if (args[1].equalsIgnoreCase("end")) {
+		} else if (args[1].equalsIgnoreCase("end") && isReal) {
 			inProgressFiles.get(args[0] + " from " + packet.getFrom()).finalize();
 			inProgressFiles.remove(args[0] + " from " + packet.getFrom());
 			Platform.runLater(() -> {
@@ -85,7 +108,15 @@ public class PacketHandler {
 					try {
 						Desktop.getDesktop().open(new File(FileHandler.downloadsPath + "/" + args[0]));
 					} catch (Exception e) {
-						e.printStackTrace();
+						FileHandler.debugPrint(e);
+					}
+				}
+				if ((FileHandler.downloadsPath + "/" + args[0]).endsWith(".jpg") || (FileHandler.downloadsPath + "/" + args[0]).endsWith(".png") || (FileHandler.downloadsPath + "/" + args[0]).endsWith(".gif")) {
+					try {
+						ls.getMainController().getImages().getChildren().add(new ImageView(new Image(new FileInputStream(FileHandler.downloadsPath + "/" + args[0]))));
+					} catch (Exception e) {
+						FileHandler.debugPrint("Unable to show image!");
+						FileHandler.debugPrint(e);
 					}
 				}
 			});

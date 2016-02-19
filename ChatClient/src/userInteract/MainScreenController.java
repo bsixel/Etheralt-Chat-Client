@@ -144,7 +144,7 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 		this.secondColumn.setMinSize(520, 600);
 		this.secondColumn.setMaxSize(520, 600);
 		this.secondColumn.getStyleClass().add("vbox");
-
+		
 		Button dlButton = new Button("Download link:");
 		dlButton.setOnAction(e -> {
 			if (!this.dlField.getText().equals(null) || !this.dlField.getText().equals(null)) {
@@ -210,6 +210,7 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 	 */
 	private void initLayout() {
 
+		Button playButton = new Button("Play song!");
 		this.layout.setPadding(new Insets(10, 10, 10, 10));
 		this.layout.setVgap(10);
 		this.layout.setHgap(10);
@@ -217,8 +218,12 @@ public class MainScreenController implements EventHandler<KeyEvent> {
 		GridPane.setConstraints(this.buttonBox, 0, 0);
 		GridPane.setConstraints(this.columnsContainer, 0, 1);
 		this.columnsContainer.getChildren().addAll(this.firstColumn, this.secondColumn);
-		this.buttonBox.getChildren().addAll(this.logoutButton, this.folderButton, this.tb, this.saveAudio, this.sendButton);
+		this.buttonBox.getChildren().addAll(this.logoutButton, this.folderButton, this.tb, this.saveAudio, this.sendButton, playButton);
 		this.firstColumn.getChildren().addAll(this.usernameLabel, this.usersArea, this.chatView, this.chatField);
+		
+		playButton.setOnAction(c -> {
+			this.audioHandler.playFile(Popups.startFileOpener("Select file to play...").toURI().toString());
+		});
 		
 		this.currScene.setOnKeyPressed(k -> {
 			if (k.isShiftDown() && k.getCode().equals(KeyCode.ESCAPE)) {

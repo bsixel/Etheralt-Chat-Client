@@ -37,6 +37,15 @@ public class FileHandler {
 	}
 	
 	/**
+	 * Writes a error message both to the error stream of the console and to the error log.
+	 * @param msg The error to write to the error log and console.
+	 */
+	public static void debugPrint(Exception e) {
+		System.err.println(SystemInfo.getFullDate() + ": " + e.getMessage() + e.getStackTrace()[0].toString());
+		writeToErrorLog(SystemInfo.getFullDate() + ": " + e.getMessage() + e.getStackTrace()[0].toString());
+	}
+	
+	/**
 	 * Static method to print a message to both the console and the chat log.
 	 * @param msg The message being printed/saved.
 	 */

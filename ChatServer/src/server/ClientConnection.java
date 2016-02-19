@@ -92,6 +92,7 @@ public class ClientConnection {
 						}
 						if (!args[3].equals(this.getServer().getPassword())) {
 							this.getSendingData().writeObject(new DataPacket("message", "all", "all", "*!decline:password", null));
+							this.getSendingData().reset();
 							//Writing to console and error log of the unsuccessful password match.
 							debugPrint("User " + this.clientName + " failed to connect with password: '" + args[3] +"' from IP " + textSocket.getInetAddress());
 							debugPrint("Desired password: " + this.getServer().getPassword());
@@ -125,6 +126,7 @@ public class ClientConnection {
 				try {
 					u.getCC().getSendingData().writeObject(new DataPacket("message", "all", "all", "*![System] " + SystemInfo.getDate() + ": " + getClientName() + " has connected.", null));
 					u.getCC().getSendingData().writeObject(new DataPacket("command", "all", "all", "/updateusers " + str, null));
+					u.getCC().sendingData.reset();
 				} catch (Exception e) {
 					debugPrint("Error notifying of new connection: " + e.getStackTrace()[0]);
 				}
@@ -158,6 +160,7 @@ public class ClientConnection {
 						if (packet.getTarget().equalsIgnoreCase("all") || packet.getTarget().equalsIgnoreCase(u.getDisplayName())) {
 							try {
 								u.getCC().sendingData.writeObject(packet);
+								u.getCC().sendingData.reset();
 							} catch (Exception e) {
 								e.printStackTrace();
 							}

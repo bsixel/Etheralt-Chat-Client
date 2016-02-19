@@ -57,9 +57,15 @@ public class CommandParser {
 		String command = args[0];
 
 		if (command.equalsIgnoreCase("/declineDL")) {
+			FileHandler.debugPrint("Received request to terminate sending thread:" + args[2] + " Thread list: " + sc.getDlThreads());
 			sc.getDlThreads().forEach(e -> {
-				if (e.getName().equalsIgnoreCase("DLThread for " + args[1])) {
+				if (e.getName().equalsIgnoreCase(args[2])) {
 					e.interrupt();
+					sc.getDlThreads().remove(e);
+					FileHandler.debugPrint("Killed sending thread for: " + args[2]);
+					Platform.runLater(() -> {
+						Popups.startInfoDlg("Alert!", "File transfer of " + args[2] + " declined by receiver.");
+					});
 				}
 			});
 		} else if (command.equalsIgnoreCase("/declineimg")) {
@@ -236,9 +242,20 @@ public class CommandParser {
 	public static void sendFile(String input, MainScreenController sc) {
 		String[] args = input.split(" ");
 		try {
+			if (!sc.getUsersArea().getText().contains(args[1])) {
+				Popups.startInfoDlg("Warning!", "No matching client to send file to!");
+				return;
+			}
 			sc.addMessage("Attempted to send file to " + args[1] + ".", "blue", "black");
 			File file = Popups.startFileOpener("Select a file to send.");
-			Thread thread = new Thread(FileHandler.sendFile(args[1], file, sc.getClient()), "DLThread for " + file.getName());
+
+			if (file == null) {
+				sc.addMessage("File sending canceled.", "blue", "black");
+				return;
+			}
+			Thread thread = new Thread(FileHandler.sendFile(args[1], file, sc.getClient()), file.getName().replaceAll(" ", "_"));
+			thread.setName(file.getName().replaceAll(" ", "_"));
+			FileHandler.debugPrint("Thread name: " + file.getName().replaceAll(" ", "_"));
 			thread.setDaemon(true);
 			sc.getDlThreads().add(thread);
 			thread.start();

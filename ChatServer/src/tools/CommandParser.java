@@ -164,12 +164,14 @@ public class CommandParser {
 
 		String[] args = input.split(" ");
 		String command = args[0];
+		FileHandler.debugPrint("Got command on server side! Received: " + input);
 
 		if (command.equals("*!tell:")) {
 			if (client.getClientName().equalsIgnoreCase(args[2]) || args[2].equals("all")) {
 				try {
 					System.out.println("Message sent from " + args[1] + " to " + args[2]);
 					client.getSendingData().writeObject(new DataPacket("message", selfClient.getClientName(), client.getClientName(), "From " + "[" + args[1] + " ] " + SystemInfo.getDate() +  ": " + input.substring(nthOccurrence(input, " ", 2)), null));
+					client.getSendingData().reset();
 				} catch (IOException e) {
 					debugPrint(e.getStackTrace()[0].toString());
 				}
@@ -190,7 +192,8 @@ public class CommandParser {
 					debugPrint(e.getStackTrace()[0].toString());
 				}
 			}
-		} else if (command.equalsIgnoreCase("*!declineDL:")) {
+		} else if (command.equalsIgnoreCase("*!declineDL")) {
+			FileHandler.debugPrint("Server received a *!declineDL!");
 			if (client.getClientName().equalsIgnoreCase(args[1])) {
 				try {
 					client.getSendingData().writeObject(new DataPacket("command", selfClient.getClientName(), client.getClientName(), "/declineDL" + input.substring(input.indexOf(" ")), null));

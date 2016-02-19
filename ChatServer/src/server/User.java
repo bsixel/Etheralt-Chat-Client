@@ -104,6 +104,7 @@ public class User {
 	public void sendMessage(String msg) {
 		try {
 			this.getCC().getSendingData().writeObject(new DataPacket("message", this.displayName, "all", msg, null));
+			this.getCC().getSendingData().reset();
 		} catch (IOException e) {
 			FileHandler.debugPrint("Error sending message from " + this.displayName);
 		}
@@ -117,6 +118,7 @@ public class User {
 		try {
 			System.out.println(msg);
 			this.getCC().getSendingData().writeObject(new DataPacket("command", this.displayName, msg.split(" ")[1], msg, null));
+			this.getCC().getSendingData().reset();
 		} catch (IOException e) {
 			FileHandler.debugPrint("Error sending command from " + this.displayName);
 		}

@@ -10,6 +10,8 @@ import javax.sound.sampled.DataLine;
 import javax.sound.sampled.TargetDataLine;
 
 import client.Client;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
 
 
 
@@ -32,7 +34,7 @@ import client.Client;
  */
 
 public class AudioHandler {
-	
+
 	private static final long RECORD_TIME = 15000;
 	private File soundFile = new File(System.getProperty("user.home") + "/Documents/Etheralt Chat Client/RecordAudio.wav");
 	private AudioFileFormat.Type fileType = AudioFileFormat.Type.WAVE;
@@ -40,7 +42,7 @@ public class AudioHandler {
 	private byte[] audioBuffer = new byte[10000];
 	//private Client client;
 	private Thread voice;
-	
+
 	/**
 	 * Default contructor for and AudioHandler. Takes in a client to use for incoming/outgoing streams.
 	 * @param client Client to use for incoming/outgoing streams.
@@ -64,6 +66,27 @@ public class AudioHandler {
 	}
 
 	/**
+	 * Plays an audio file on the client side.
+	 * @param path The path to the audio file.
+	 */
+	public void playFile(String path) {
+		/*try {
+
+		} catch (Exception e) {
+			FileHandler.debugPrint(e.getMessage() + e.getStackTrace()[0].toString());
+		}*/
+		try{
+			Media hit = new Media(path);
+			MediaPlayer mediaPlayer = new MediaPlayer(hit);
+			mediaPlayer.play();
+		}
+		catch(Exception ex) {
+			//FileHandler.debugPrint(ex);
+			ex.printStackTrace();
+		}
+	}
+
+	/**
 	 * Starts the recording process.
 	 * @param record A boolean for whether or not the audio should be saved to the system.
 	 */
@@ -82,8 +105,8 @@ public class AudioHandler {
 
 			AudioInputStream ais = new AudioInputStream(mic);
 			mic.read(audioBuffer, 0, (int) RECORD_TIME);
-			
-			
+
+
 			voice = new Thread(() -> {
 				while (true) {
 					try {
@@ -96,11 +119,11 @@ public class AudioHandler {
 			});
 			voice.setDaemon(true);
 			voice.start();
-			
+
 			System.out.println("Started recording.");
-			
-			
-			
+
+
+
 			if (record) {
 				AudioSystem.write(ais, fileType, soundFile);
 			}

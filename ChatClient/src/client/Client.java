@@ -69,6 +69,7 @@ public class Client {
 
 			if (password.equalsIgnoreCase("")) {
 				this.sendingData.writeObject(new DataPacket("message", "all", "all", "*!givename: " + editedName.trim() + " " + FileHandler.getProperty("computer_ID") + " default", null));
+				this.getSendingStream().reset();
 			} else {
 				this.sendingData.writeObject(new DataPacket("message", "all", "all", "*!givename: " + editedName.trim() + " " + FileHandler.getProperty("computer_ID") + " " + password, null));
 			}
@@ -237,6 +238,7 @@ public class Client {
 	public void sendMessage(String message) {
 		try {
 			this.sendingData.writeObject(new DataPacket("message", this.clientName, "all", message, null));
+			this.sendingData.reset();
 		} catch (IOException e) {
 			debugPrint("Error sending message data packet!");
 //			debugPrint(e.getStackTrace()[0].toString());
@@ -252,6 +254,7 @@ public class Client {
 		String[] args = message.split(" ");
 		try {
 			this.sendingData.writeObject(new DataPacket("command", this.clientName, args[1], message, null));
+			this.sendingData.reset();
 		} catch (IOException e) {
 			debugPrint("Error sending message data packet!");
 			debugPrint(e.getStackTrace()[0].toString());

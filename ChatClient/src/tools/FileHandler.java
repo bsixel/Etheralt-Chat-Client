@@ -71,6 +71,15 @@ public class FileHandler {
 	}
 	
 	/**
+	 * Writes a error message both to the error stream of the console and to the error log.
+	 * @param msg The error to write to the error log and console.
+	 */
+	public static void debugPrint(Exception e) {
+		System.err.println(SystemInfo.getFullDate() + ": " + e.getMessage() + e.getStackTrace()[0].toString());
+		writeToErrorLog(SystemInfo.getFullDate() + ": " + e.getMessage() + e.getStackTrace()[0].toString());
+	}
+	
+	/**
 	 * Writes a message both to the regular stream of the console and to the chat log.
 	 * @param msg The message to write to the chat log and console.
 	 */
@@ -513,14 +522,20 @@ public class FileHandler {
 				long fileLength = file.length();
 				long total = 0;
 				client.getSendingStream().writeObject(new DataPacket("dlpacket", client.getClientName(), target, name + " start " + fileLength, null));
+				client.getSendingStream().reset();
 				long packetnum = 1;
 				while (total != fileLength) {
 					count = fileStream.read(fileBuffer, 0, 8192);
 					client.getSendingStream().writeObject(new DataPacket("dlpacket", client.getClientName(), target, name + " transfer " + count + " " + packetnum++, Arrays.copyOf(fileBuffer, count)));
+					client.getSendingStream().reset();
 					total += count;
 				}
-				System.err.println("Sending finished after " + (packetnum - 1) + " packets. Total length: " + total + " Target: " + fileLength);
+				FileHandler.debugPrint("Sending finished after " + (packetnum - 1) + " packets. Total length: " + total + " Target: " + fileLength);
 				client.getSendingStream().writeObject(new DataPacket("dlpacket", client.getClientName(), target, name + " end " + total, null));
+				client.getSendingStream().reset();
+				Platform.runLater(() -> {
+					Popups.startInfoDlg("Success!", "File transfer of " + name + " complete.");
+				});
 				fileStream.close();
 				Thread.currentThread().interrupt();
 			} catch (Exception e) {
@@ -597,6 +612,7 @@ public class FileHandler {
 				long fileLength = file.length();
 				long total = 0;
 				client.getSendingStream().writeObject(new DataPacket("imgpacket", client.getClientName(), target, name + " start " + fileLength, null));
+				client.getSendingStream().reset();
 				long packetnum = 1;
 				while (total != fileLength) {
 					count = fileStream.read(fileBuffer, 0, 8192);
@@ -627,6 +643,7 @@ public class FileHandler {
 			byte[] fileBuffer = new byte[8192];
 			FileInputStream fileStream = new FileInputStream(file);
 			client.getSendingStream().writeObject(new DataPacket("audiopacket", client.getClientName(), "all", "start", fileBuffer));
+			client.getSendingStream().reset();
 			while ((count = fileStream.read(fileBuffer, 0, 8192)) > 0) {
 				client.getSendingStream().writeObject(new DataPacket("audiopacket", client.getClientName(), "all", "transfer " + count, fileBuffer));
 			}
